@@ -942,936 +942,169 @@ class JustifiedCaptions {
         return Math.max(1, Math.round(caption.getBoundingClientRect().height / lineHeight))
     }
 
-    setWidth(caption, width, fullWidth) {
-        caption.style.width = width + 'px'
-        const margin = (fullWidth - width) / 2
-        caption.style.marginLeft = margin + 'px'
-        caption.style.marginRight = margin + 'px'
-    }
-
-    reset(caption) {
-        caption.style.width = ''
-        caption.style.marginLeft = ''
-        caption.style.marginRight = ''
-    }
-
-    fit() {
-        this.captions.forEach(caption => this.fitOne(caption))
-    }
-
-    fitOne(caption) {
-        this.reset(caption)
-        const fullWidth = caption.getBoundingClientRect().width
-        if (fullWidth === 0) {
-            return
-        }
-        const widest = Math.ceil(fullWidth * (1 + this.slack))
-        this.setWidth(caption, widest, fullWidth)
-        const targetLines = this.lineCount(caption)
-        if (targetLines < 2) {
-            this.reset(caption)
-            return
-        }
-        // Smallest width that still fits in targetLines. Line count is
-        // monotone in width, so a binary search finds it.
-        let low = 1
-        let high = widest
-        while (low < high) {
-            const mid = Math.floor((low + high) / 2)
-            this.setWidth(caption, mid, fullWidth)
-            if (this.lineCount(caption) > targetLines) {
-                low = mid + 1
-            } else {
-                high = mid
-            }
-        }
-        this.setWidth(caption, high, fullWidth)
-    }
-}
-
-class MethodologyContents {
-    constructor(articleSelector = '.methodology-article', linkSelector = '.methodology-toc-link') {
-        this.article = document.querySelector(articleSelector)
-        this.links = Array.from(document.querySelectorAll(linkSelector))
-        if (!this.article || this.links.length === 0) {
-            return
-        }
-        this.headings = Array.from(this.article.querySelectorAll('.methodology-heading[id]'))
-        if (this.headings.length === 0) {
-            return
-        }
-        this.activeAnchor = null
-        this.frameRequested = false
-        this.rigEventListeners()
-        this.update()
-    }
-
-    rigEventListeners() {
-        const schedule = () => {
-            if (this.frameRequested) {
-                return
-            }
-            this.frameRequested = true
-            window.requestAnimationFrame(() => {
-                this.frameRequested = false
-                this.update()
-            })
-        }
-        window.addEventListener('scroll', schedule, { passive: true })
-        window.addEventListener('resize', schedule)
-        window.addEventListener('hashchange', schedule)
-        window.addEventListener('load', schedule)
-    }
-
-    currentAnchor() {
-        const documentHeight = document.documentElement.scrollHeight
-        const atBottom = window.innerHeight + window.scrollY >= documentHeight - 2
-        if (atBottom) {
-            return this.headings[this.headings.length - 1].id
-        }
-        // The reading line sits a quarter of the way down the viewport; the
-        // active section is the last one whose heading has crossed it.
-        const readingLine = window.innerHeight * 0.25
-        let current = this.headings[0].id
-        for (const heading of this.headings) {
-            if (heading.getBoundingClientRect().top > readingLine) {
-                break
-            }
-            current = heading.id
-        }
-        return current
-    }
-
-    update() {
-        const anchor = this.currentAnchor()
-        if (anchor === this.activeAnchor) {
-            return
-        }
-        this.activeAnchor = anchor
-        const target = '#' + anchor
-        this.links.forEach(link => {
-            const active = link.getAttribute('href') === target
-            link.classList.toggle('is-active', active)
-            if (active) {
-                link.setAttribute('aria-current', 'true')
-            } else {
-                link.removeAttribute('aria-current')
-            }
-        })
-    }
-}
-
-class ThemeToggle {
-    constructor(parentElement) {
-        this.parentElement = parentElement
-        this.currentTheme = window.theme || localStorage.getItem("theme") || "dark"
-        this.initToggle()
-        this.rigEventListeners()
-        this.updateToggleState()
-    }
-
-    initToggle() {
-        // Create the theme toggle structure
-        this.parentElement.innerHTML = '<div id="theme-label-header-span"class="theme-label"></div>' +
-            '<label class="theme-toggle">' +
-                '<input type="checkbox"id="darkModeToggle"/>' +
-                '<span class="icons moon-svg">' +
-                    '<svg class="icon moon"viewBox="0 0 24 24">' +
-                        '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>' +
-                    '</svg>' +
-                '</span>' +
-                '<span class="slider"></span>' +
-                '<span class="icons sun-svg">' +
-                    '<svg class="icon sun"viewBox="0 0 24 24">' +
-                        '<circle cx="12"cy="12"r="5"/>' +
-                        '<g stroke-width="2">' +
-                            '<line x1="12"y1="1"x2="12"y2="3"/>' +
-                            '<line x1="12"y1="21"x2="12"y2="23"/>' +
-                            '<line x1="4.2"y1="4.2"x2="5.6"y2="5.6"/>' +
-                            '<line x1="18.4"y1="18.4"x2="19.8"y2="19.8"/>' +
-                            '<line x1="1"y1="12"x2="3"y2="12"/>' +
-                            '<line x1="21"y1="12"x2="23"y2="12"/>' +
-                            '<line x1="4.2"y1="19.8"x2="5.6"y2="18.4"/>' +
-                            '<line x1="18.4"y1="5.6"x2="19.8"y2="4.2"/>' +
-                        '</g>' +
-                    '</svg>' +
-                '</span>' +
-            '</label>';
-
-        // Get references to elements
-        this.checkbox = this.parentElement.querySelector("#darkModeToggle");
-        this.label = this.parentElement.querySelector("#theme-label-header-span");
-    }
-
-    rigEventListeners() {
-        // Set up checkbox properties
-        this.checkbox.title = "Toggle Light/Dark Page Theme"
-        
-        // Add event listener for theme changes
-        this.checkbox.addEventListener("change", () => {
-            this.handleThemeChange()
-        })
-    }
-
-    handleThemeChange() {
-        const newTheme = this.checkbox.checked ? "light" : "dark"
-        this.setTheme(newTheme)
-    }
-
-    setTheme(theme) {
-        this.currentTheme = theme
-        const htmlTag = document.documentElement
-        
-        if (theme === "light") {
-            htmlTag.classList.remove("dark-theme")
-            htmlTag.classList.add("light-theme")
-            localStorage.setItem("theme", "light")
-            window.theme = "light"
-            this.label.innerText = "Light Theme"
-            this.checkbox.checked = true
-        } else {
-            htmlTag.classList.remove("light-theme")
-            htmlTag.classList.add("dark-theme")
-            localStorage.setItem("theme", "dark")
-            window.theme = "dark"
-            this.label.innerText = "Dark Theme"
-            this.checkbox.checked = false
-        }
-        
-        this.updateCharts()
-    }
-
-    updateToggleState() {
-        // Update the toggle to reflect current theme
-        this.checkbox.checked = this.currentTheme === "light"
-        this.label.innerText = this.currentTheme.replace(/\b\w/g, char => char.toUpperCase()) + " Theme"
-    }
-
-    updateCharts() {
-        // Update charts if SSPICharts array exists
-        if (window.SSPICharts && Array.isArray(window.SSPICharts)) {
-            window.SSPICharts.forEach((chartObj) => {
-                if (chartObj && typeof chartObj.setTheme === 'function') {
-                    chartObj.setTheme(window.theme)
-                }
-            })
-        }
-    }
-
-    // Public method to get current theme
-    getTheme() {
-        return this.currentTheme
-    }
-}
-
-/**
- * NotificationManager - Global notification system
- * Replaces Flask flash messages with a cleaner, JavaScript-based notification system
- */
-class NotificationManager {
-    constructor() {
-        this.notifications = [];
-        this.history = [];
-        this.nextId = 0;
-    }
-
-    /**
-     * Show a notification to the user
-     * @param {string} message - The message to display
-     * @param {string} type - The notification type ('success', 'error', 'warning', 'info')
-     * @param {number} duration - Duration in milliseconds (default: 3000, 0 = persistent)
-     * @returns {Object} Notification object with id and element
-     */
-    show(message, type = 'info', duration = 3000) {
-        const id = this.nextId++;
-
-        const notification = document.createElement('div');
-        notification.dataset.notificationId = id;
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 20px;
-            border-radius: 5px;
-            color: white;
-            font-weight: normal;
-            z-index: 10000;
-            max-width: 450px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            animation: slideInRight 0.3s ease-out;
-            word-wrap: break-word;
-            line-height: 1.4;
-            white-space: pre-line;
-        `;
-
-        // Set background color based on type
-        switch(type) {
-            case 'success':
-                notification.style.backgroundColor = '#4CAF50';
-                break;
-            case 'error':
-                notification.style.backgroundColor = '#f44336';
-                break;
-            case 'warning':
-                notification.style.backgroundColor = '#ff9800';
-                break;
-            default:
-                notification.style.backgroundColor = '#2196F3';
-        }
-
-        notification.textContent = message;
-
-        // Add to DOM with stacking
-        this._stackNotification(notification);
-
-        const notificationObj = {
-            id,
-            element: notification,
-            message,
-            type,
-            timestamp: Date.now()
-        };
-
-        this.notifications.push(notificationObj);
-        this.history.push({...notificationObj, dismissed: false});
-
-        // Auto-remove after duration (if not persistent)
-        if (duration > 0) {
-            setTimeout(() => {
-                this.clear(id);
-            }, duration);
-        }
-
-        return notificationObj;
-    }
-
-    /**
-     * Stack notification with proper spacing
-     * @private
-     */
-    _stackNotification(notification) {
-        const existingNotifications = document.querySelectorAll('[data-notification-id]');
-        let topOffset = 20;
-
-        existingNotifications.forEach(existing => {
-            const rect = existing.getBoundingClientRect();
-            topOffset = Math.max(topOffset, rect.bottom - document.documentElement.getBoundingClientRect().top + 10);
-        });
-
-        notification.style.top = topOffset + 'px';
-        document.body.appendChild(notification);
-    }
-
-    /**
-     * Clear a specific notification by ID
-     * @param {number} id - The notification ID
-     */
-    clear(id) {
-        const index = this.notifications.findIndex(n => n.id === id);
-        if (index === -1) return;
-
-        const notificationObj = this.notifications[index];
-        const notification = notificationObj.element;
-
-        if (notification && notification.parentNode) {
-            notification.style.animation = 'slideOutRight 0.3s ease-in';
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
-                }
-            }, 300);
-        }
-
-        this.notifications.splice(index, 1);
-
-        // Mark as dismissed in history
-        const historyEntry = this.history.find(h => h.id === id);
-        if (historyEntry) {
-            historyEntry.dismissed = true;
-            historyEntry.dismissedAt = Date.now();
-        }
-
-        // Restack remaining notifications
-        this._restackNotifications();
-    }
-
-    /**
-     * Restack all remaining notifications
-     * @private
-     */
-    _restackNotifications() {
-        setTimeout(() => {
-            const existingNotifications = document.querySelectorAll('[data-notification-id]');
-            let topOffset = 20;
-
-            existingNotifications.forEach(notification => {
-                notification.style.top = topOffset + 'px';
-                const rect = notification.getBoundingClientRect();
-                topOffset = rect.bottom - document.documentElement.getBoundingClientRect().top + 10;
-            });
-        }, 50);
-    }
-
-    /**
-     * Clear all active notifications
-     */
-    clearAll() {
-        const ids = this.notifications.map(n => n.id);
-        ids.forEach(id => this.clear(id));
-    }
-
-    /**
-     * Get notification history
-     * @param {number} limit - Maximum number of history entries to return
-     * @returns {Array} Array of notification history objects
-     */
-    getHistory(limit = 50) {
-        return this.history.slice(-limit);
-    }
-
-    /**
-     * Clear notification history
-     */
-    clearHistory() {
-        this.history = [];
-    }
-
-    // Convenience methods
-    success(message, duration = 3000) {
-        return this.show(message, 'success', duration);
-    }
-
-    error(message, duration = 5000) {
-        return this.show(message, 'error', duration);
-    }
-
-    warning(message, duration = 4000) {
-        return this.show(message, 'warning', duration);
-    }
-
-    info(message, duration = 3000) {
-        return this.show(message, 'info', duration);
-    }
-}
-
-// Create global instance
-window.notifications = new NotificationManager();
-
-/**
- * SearchableDropdown - A custom dropdown component with search functionality
- *
- * Features:
- * - Keyboard-navigable search input
- * - Grouped options (optgroups)
- * - Filters options in real-time
- * - Maintains visual consistency with site theme
- * - Accessible keyboard navigation
- */
-class SearchableDropdown {
-    constructor(selectElement, options = {}) {
-        this.originalSelect = selectElement;
-        this.options = {
-            placeholder: options.placeholder || 'Search...',
-            onChange: options.onChange || (() => {}),
-            ...options
-        };
-
-        // Parse options from original select element
-        this.parseOptions();
-
-        // Create custom dropdown elements
-        this.createDropdown();
-
-        // Initialize state
-        this.isOpen = false;
-        this.selectedValue = this.originalSelect.value;
-        this.selectedLabel = this.getSelectedLabel();
-        this.filteredOptions = [...this.allOptions];
-        this.highlightedIndex = -1;
-
-        // Bind events
-        this.bindEvents();
-
-        // Hide original select
-        this.originalSelect.style.display = 'none';
-
-        // Insert custom dropdown after original select
-        this.originalSelect.parentNode.insertBefore(this.container, this.originalSelect.nextSibling);
-
-        // Update display
-        this.updateSelectedDisplay();
-    }
-
-    parseOptions() {
-        this.groups = [];
-        this.allOptions = [];
-
-        // Parse optgroups and options
-        const children = Array.from(this.originalSelect.children);
-
-        children.forEach(child => {
-            if (child.tagName === 'OPTGROUP') {
-                const groupLabel = child.label;
-                const groupOptions = Array.from(child.children).map(option => ({
-                    value: option.value,
-                    label: option.textContent,
-                    group: groupLabel,
-                    selected: option.selected
-                }));
-
-                this.groups.push({
-                    label: groupLabel,
-                    options: groupOptions
-                });
-
-                this.allOptions.push(...groupOptions);
-            } else if (child.tagName === 'OPTION') {
-                const option = {
-                    value: child.value,
-                    label: child.textContent,
-                    group: null,
-                    selected: child.selected
-                };
-
-                // Only add non-placeholder options
-                if (child.value) {
-                    this.allOptions.push(option);
-                }
-            }
-        });
-    }
-
-    createDropdown() {
-        // Main container
-        this.container = document.createElement('div');
-        this.container.className = 'searchable-dropdown';
-
-        // Selected value display
-        this.selectedDisplay = document.createElement('div');
-        this.selectedDisplay.className = 'searchable-dropdown-selected';
-        this.selectedDisplay.innerHTML = `
-            <span class="searchable-dropdown-label"></span>
-            <svg class="searchable-dropdown-arrow" width="12" height="12" viewBox="0 0 12 12">
-                <path d="M2 4 L6 8 L10 4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
-            </svg>
-        `;
-        this.container.appendChild(this.selectedDisplay);
-
-        // Dropdown panel
-        this.panel = document.createElement('div');
-        this.panel.className = 'searchable-dropdown-panel';
-
-        // Search input
-        this.searchInput = document.createElement('input');
-        this.searchInput.type = 'text';
-        this.searchInput.className = 'searchable-dropdown-search';
-        this.searchInput.placeholder = this.options.placeholder;
-        this.panel.appendChild(this.searchInput);
-
-        // Options list
-        this.optionsList = document.createElement('div');
-        this.optionsList.className = 'searchable-dropdown-options';
-        this.panel.appendChild(this.optionsList);
-
-        this.container.appendChild(this.panel);
-    }
-
-    bindEvents() {
-        console.log('[SearchableDropdown]Binding events to search input:', this.searchInput);
-
-        // Toggle dropdown
-        this.selectedDisplay.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.toggle();
-        });
-
-        // Search input
-        this.searchInput.addEventListener('input', (e) => {
-            this.filterOptions(e.target.value);
-        });
-
-        this.searchInput.addEventListener('keydown', (e) => {
-            console.log('[SearchableDropdown]Keydown event fired on search input');
-            this.handleKeyDown(e);
-        });
-
-        // Click outside to close
-        document.addEventListener('click', (e) => {
-            if (!this.container.contains(e.target)) {
-                this.close();
-            }
-        });
-
-        // Option selection
-        this.optionsList.addEventListener('click', (e) => {
-            const optionEl = e.target.closest('.searchable-dropdown-option');
-            if (optionEl) {
-                const value = optionEl.dataset.value;
-                this.selectOption(value);
-            }
-        });
-    }
-
-    toggle() {
-        if (this.isOpen) {
-            this.close();
-        } else {
-            this.open();
-        }
-    }
-
-    open() {
-        console.log('[SearchableDropdown]Opening dropdown');
-        this.isOpen = true;
-        this.container.classList.add('is-open');
-        this.searchInput.value = '';
-        this.filterOptions('');
-        this.searchInput.focus();
-        console.log('[SearchableDropdown]Search input focused,active element:', document.activeElement === this.searchInput);
-        this.highlightedIndex = -1;
-        console.log('[SearchableDropdown]Dropdown opened with', this.filteredOptions.length, 'options,highlightedIndex reset to-1');
-    }
-
-    close() {
-        console.log('[SearchableDropdown]Closing dropdown');
-        this.isOpen = false;
-        this.container.classList.remove('is-open');
-        this.highlightedIndex = -1;
-
-        // Ensure panel is hidden and clear search
-        this.searchInput.value = '';
-        this.searchInput.blur();
-
-        console.log('[SearchableDropdown]Dropdown closed,is-open class removed:', !this.container.classList.contains('is-open'));
-    }
-
-    filterOptions(query) {
-        const lowerQuery = query.toLowerCase();
-
-        if (!query) {
-            this.filteredOptions = [...this.allOptions];
-        } else {
-            this.filteredOptions = this.allOptions.filter(option => {
-                return option.label.toLowerCase().includes(lowerQuery) ||
-                       option.value.toLowerCase().includes(lowerQuery);
-            });
-        }
-
-        this.renderOptions();
-        this.highlightedIndex = -1;
-    }
-
-    renderOptions() {
-        this.optionsList.innerHTML = '';
-
-        if (this.filteredOptions.length === 0) {
-            this.optionsList.innerHTML = '<div class="searchable-dropdown-no-results">No results found</div>';
-            return;
-        }
-
-        // Group options by category
-        const grouped = {};
-        this.filteredOptions.forEach(option => {
-            const group = option.group || 'Other';
-            if (!grouped[group]) {
-                grouped[group] = [];
-            }
-            grouped[group].push(option);
-        });
-
-        // Render grouped options
-        Object.entries(grouped).forEach(([groupLabel, options]) => {
-            const groupEl = document.createElement('div');
-            groupEl.className = 'searchable-dropdown-group';
-
-            const groupLabelEl = document.createElement('div');
-            groupLabelEl.className = 'searchable-dropdown-group-label';
-            groupLabelEl.textContent = groupLabel;
-            groupEl.appendChild(groupLabelEl);
-
-            options.forEach(option => {
-                const optionEl = document.createElement('div');
-                optionEl.className = 'searchable-dropdown-option';
-                optionEl.dataset.value = option.value;
-
-                if (option.value === this.selectedValue) {
-                    optionEl.classList.add('is-selected');
-                }
-
-                optionEl.textContent = option.label;
-                groupEl.appendChild(optionEl);
-            });
-
-            this.optionsList.appendChild(groupEl);
-        });
-    }
-
-    selectOption(value) {
-        // Update original select
-        this.originalSelect.value = value;
-
-        // Update state
-        this.selectedValue = value;
-        this.selectedLabel = this.getSelectedLabel();
-
-        // Update display
-        this.updateSelectedDisplay();
-
-        // Close dropdown
-        this.close();
-
-        // Trigger change event on original select
-        const event = new Event('change', { bubbles: true });
-        this.originalSelect.dispatchEvent(event);
-
-        // Call onChange callback
-        this.options.onChange(value);
-    }
-
-    getSelectedLabel() {
-        const option = this.allOptions.find(opt => opt.value === this.selectedValue);
-        return option ? option.label : (this.originalSelect.querySelector('option[value=""]')?.textContent || 'Select...');
-    }
-
-    updateSelectedDisplay() {
-        const label = this.container.querySelector('.searchable-dropdown-label');
-        label.textContent = this.selectedLabel;
-
-        if (!this.selectedValue) {
-            label.classList.add('is-placeholder');
-        } else {
-            label.classList.remove('is-placeholder');
-        }
-    }
-
-    handleKeyDown(e) {
-        const options = Array.from(this.optionsList.querySelectorAll('.searchable-dropdown-option'));
-
-        console.log('[SearchableDropdown]Key pressed:', e.key, 'Options count:', options.length, 'Current index:', this.highlightedIndex);
-
-        switch(e.key) {
-            case 'ArrowDown':
-                e.preventDefault();
-                const newDownIndex = Math.min(this.highlightedIndex + 1, options.length - 1);
-                console.log('[SearchableDropdown]ArrowDown:index', this.highlightedIndex, '->', newDownIndex);
-                this.highlightedIndex = newDownIndex;
-                this.updateHighlight(options);
-                break;
-
-            case 'ArrowUp':
-                e.preventDefault();
-                const newUpIndex = Math.max(this.highlightedIndex - 1, 0);
-                console.log('[SearchableDropdown]ArrowUp:index', this.highlightedIndex, '->', newUpIndex);
-                this.highlightedIndex = newUpIndex;
-                this.updateHighlight(options);
-                break;
-
-            case 'Enter':
-                e.preventDefault();
-                console.log('[SearchableDropdown]Enter pressed,index:', this.highlightedIndex);
-                if (this.highlightedIndex >= 0 && options[this.highlightedIndex]) {
-                    const value = options[this.highlightedIndex].dataset.value;
-                    this.selectOption(value);
-                }
-                break;
-
-            case 'Escape':
-                e.preventDefault();
-                console.log('[SearchableDropdown]Escape pressed');
-                this.close();
-                break;
-        }
-    }
-
-    updateHighlight(options) {
-        console.log('[SearchableDropdown]updateHighlight called,highlighting index:', this.highlightedIndex, 'of', options.length, 'options');
-
-        options.forEach((option, index) => {
-            if (index === this.highlightedIndex) {
-                console.log('[SearchableDropdown]Adding highlight to option:', option.textContent);
-                option.classList.add('is-highlighted');
-                option.scrollIntoView({ block: 'nearest' });
-            } else {
-                option.classList.remove('is-highlighted');
-            }
-        });
-    }
-
-    // Public API
-    getValue() {
-        return this.selectedValue;
-    }
-
-    setValue(value) {
-        this.selectOption(value);
-    }
-
-    destroy() {
-        this.container.remove();
-        this.originalSelect.style.display = '';
-    }
-}
-
-/**
- * YearSlider - Reusable year slider component with play/pause functionality
- *
- * Used across multiple charts (Globe, Radar, Correlation) for consistent
- * year selection and timeline playback.
- *
- * Features:
- * - Range slider with visual year display
- * - Editable year input with validation
- * - Play/pause timeline animation
- * - Persistent state via observableStorage
- *
- * @example
- * const slider = new YearSlider({
- *     containerId: 'my-slider',
- *     minYear: 2000,
- *     maxYear: 2023,
- *     initialYear: 2020,
- *     storageKey: 'myChartYear',
- *     onChange: (year) => { console.log('Year changed:', year) },
- *     playInterval: 1200
- * })
- */
-class YearSlider {
-    /**
-     * @param {Object} options - Configuration options
-     * @param {string} options.containerId - Unique ID for the slider container element
-     * @param {number} options.minYear - Minimum year value
-     * @param {number} options.maxYear - Maximum year value
-     * @param {number} [options.initialYear] - Starting year (defaults to maxYear)
-     * @param {string} [options.storageKey] - Key for persistent storage (defaults to 'yearSlider_{containerId}')
-     * @param {Function} [options.onChange] - Callback when year changes: (year) => void
-     * @param {number} [options.playInterval=1200] - Milliseconds between year advances during playback
-     * @param {boolean} [options.enablePlayback=true] - Whether to show play/pause button
-     */
-    constructor(options) {
-        // Required options
-        this.containerId = options.containerId;
-        this.minYear = options.minYear;
-        this.maxYear = options.maxYear;
-        this.storageKey = options.storageKey || `yearSlider_${this.containerId}`;
-        this.playStorageKey = `${this.storageKey}_playing`;
-        this.playInterval = options.playInterval || 1200;
-        this.enablePlayback = options.enablePlayback !== false; // Default true
-        this.onChange = options.onChange || (() => {});
-        const storedYear = window.observableStorage?.getItem(this.storageKey);
-        this.year = storedYear || options.initialYear || this.maxYear;
-        this.year = Math.max(this.minYear, Math.min(this.maxYear, this.year));
-        const storedPlaying = window.observableStorage?.getItem(this.playStorageKey);
-        this.playing = storedPlaying || false;
-        this.playIntervalId = null;
-        // Build DOM
-        this.build();
-        this.attachEventListeners();
-        // Restore playing state if it was active
-        if (this.playing) {
-            this.startPlay();
-        }
-    }
-
-    build() {
-        this.container = document.createElement('div');
-        this.container.id = this.containerId;
-        this.container.classList.add('globe-year-slider-container'); // Reuse existing CSS class
-
-        const playPauseButton = this.enablePlayback
-            ? `<button class="year-play-pause-button" aria-label="Play timeline">
-                <span class="play-icon">▶</span>
-                <span class="pause-icon" style="display:none;">⏸</span>
-               </button>`
-            : '';
-
-        this.container.innerHTML = `
-<div class="year-slider-controls">
-    <label class="year-slider-label" for="${this.containerId}-input">
-        <span class="year-value-display" contenteditable="true" spellcheck="false">${this.year}</span>
-    </label>
-    <div class="year-slider-wrapper">
-        <div class="year-slider-track-container">
-            <div class="year-slider-ticks"></div>
-            <input
-                type="range"
-                class="year-slider-input"
-                id="${this.containerId}-input"
-                min="${this.minYear}"
-                max="${this.maxYear}"
-                value="${this.year}"
-                step="1"
-            />
-        </div>
-        <div class="year-slider-bounds">
-            <span class="year-slider-min">${this.minYear}</span>
-            <span class="year-slider-max">${this.maxYear}</span>
-        </div>
-    </div>
-    ${playPauseButton}
-</div>`;
-    }
-
-    attachEventListeners() {
-        this.input = this.container.querySelector('.year-slider-input');
-        this.display = this.container.querySelector('.year-value-display');
-
-        // Range slider input
-        this.input.addEventListener('input', (e) => {
-            if (this.playing) {
-                this.stopPlay();
-            }
-            this.setYear(parseInt(e.target.value));
-        });
-
-        // Editable display - keyboard handling
-        this.display.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                this.display.blur();
-            } else if (!/^\d$/.test(e.key) && !['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.key)) {
-                e.preventDefault();
-            }
-        });
-
-        // Editable display - blur validation
-        this.display.addEventListener('blur', () => {
-            const inputYear = parseInt(this.display.textContent.trim());
-
-            if (isNaN(inputYear) || inputYear < this.minYear || inputYear > this.maxYear) {
-                // Invalid year, revert to current year
-                this.display.textContent = this.year;
-                this.display.classList.add('year-input-error');
-                setTimeout(() => {
-                    this.display.classList.remove('year-input-error');
-                }, 500);
-            } else if (inputYear !== this.year) {
-                // Valid year and different from current, update
-                if (this.playing) {
-                    this.stopPlay();
-                }
-                this.setYear(inputYear);
-            } else {
-                // Same year, just ensure formatting is correct
-                this.display.textContent = this.year;
-            }
-        });
-
-        // Play/pause button
-        if (this.enablePlayback) {
-            this.playPauseButton = this.container.querySelector('.year-play-pause-button');
-            this.playIcon = this.container.querySelector('.play-icon');
-            this.pauseIcon = this.container.querySelector('.pause-icon');
-
-            this.playPauseButton.addEventListener('click', () => {
-                this.togglePlay();
-            });
-        }
-    }
-
-    /**
-     * Set the current year and trigger onChange callback
-     * @param {number} year - Year to set
-     * @param {boolean} [silent=false] - If true, don't trigger onChange callback*/
+    // Width of the caption's container,minus its padding,so the caption
+outerWidth(caption){const parent=caption.parentElement
+const style=window.getComputedStyle(parent)
+const padding=parseFloat(style.paddingLeft)+parseFloat(style.paddingRight)
+return parent.clientWidth-(Number.isNaN(padding)?0:padding)}
+setWidth(caption,width,outerWidth){caption.style.width=width+'px'
+const margin=Math.max(0,(outerWidth-width)/2)
+caption.style.marginLeft=margin+'px'
+caption.style.marginRight=margin+'px'}
+reset(caption){caption.style.width=''
+caption.style.marginLeft=''
+caption.style.marginRight=''}
+fit(){this.captions.forEach(caption=>this.fitOne(caption))}
+fitOne(caption){this.reset(caption)
+const fullWidth=caption.getBoundingClientRect().width
+const outerWidth=this.outerWidth(caption)
+if(fullWidth===0||outerWidth===0){return}
+const widest=Math.min(Math.ceil(fullWidth*(1+this.slack)),Math.floor(outerWidth))
+this.setWidth(caption,widest,outerWidth)
+const targetLines=this.lineCount(caption)
+if(targetLines<2){this.reset(caption)
+return}
+let low=1
+let high=widest
+while(low<high){const mid=Math.floor((low+high)/2)
+this.setWidth(caption,mid,outerWidth)
+if(this.lineCount(caption)>targetLines){low=mid+1}else{high=mid}}
+this.setWidth(caption,high,outerWidth)}}
+class MethodologyContents{constructor(articleSelector='.methodology-article',linkSelector='.methodology-toc-link'){this.article=document.querySelector(articleSelector)
+this.links=Array.from(document.querySelectorAll(linkSelector))
+if(!this.article||this.links.length===0){return}
+this.headings=Array.from(this.article.querySelectorAll('.methodology-heading[id]'))
+if(this.headings.length===0){return}
+this.activeAnchor=null
+this.frameRequested=false
+this.rigEventListeners()
+this.update()}
+rigEventListeners(){const schedule=()=>{if(this.frameRequested){return}
+this.frameRequested=true
+window.requestAnimationFrame(()=>{this.frameRequested=false
+this.update()})}
+window.addEventListener('scroll',schedule,{passive:true})
+window.addEventListener('resize',schedule)
+window.addEventListener('hashchange',schedule)
+window.addEventListener('load',schedule)}
+currentAnchor(){const documentHeight=document.documentElement.scrollHeight
+const atBottom=window.innerHeight+window.scrollY>=documentHeight-2
+if(atBottom){return this.headings[this.headings.length-1].id}
+const readingLine=window.innerHeight*0.25
+let current=this.headings[0].id
+for(const heading of this.headings){if(heading.getBoundingClientRect().top>readingLine){break}
+current=heading.id}
+return current}
+update(){const anchor=this.currentAnchor()
+if(anchor===this.activeAnchor){return}
+this.activeAnchor=anchor
+const target='#'+anchor
+this.links.forEach(link=>{const active=link.getAttribute('href')===target
+link.classList.toggle('is-active',active)
+if(active){link.setAttribute('aria-current','true')}else{link.removeAttribute('aria-current')}})}}
+class ThemeToggle{constructor(parentElement){this.parentElement=parentElement
+this.currentTheme=window.theme||localStorage.getItem("theme")||"dark"
+this.initToggle()
+this.rigEventListeners()
+this.updateToggleState()}
+initToggle(){this.parentElement.innerHTML='<div id="theme-label-header-span" class="theme-label"></div>'+
+'<label class="theme-toggle">'+
+'<input type="checkbox" id="darkModeToggle" />'+
+'<span class="icons moon-svg">'+
+'<svg class="icon moon" viewBox="0 0 24 24">'+
+'<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />'+
+'</svg>'+
+'</span>'+
+'<span class="slider"></span>'+
+'<span class="icons sun-svg">'+
+'<svg class="icon sun" viewBox="0 0 24 24">'+
+'<circle cx="12" cy="12" r="5" />'+
+'<g stroke-width="2">'+
+'<line x1="12" y1="1" x2="12" y2="3" />'+
+'<line x1="12" y1="21" x2="12" y2="23" />'+
+'<line x1="4.2" y1="4.2" x2="5.6" y2="5.6" />'+
+'<line x1="18.4" y1="18.4" x2="19.8" y2="19.8" />'+
+'<line x1="1" y1="12" x2="3" y2="12" />'+
+'<line x1="21" y1="12" x2="23" y2="12" />'+
+'<line x1="4.2" y1="19.8" x2="5.6" y2="18.4" />'+
+'<line x1="18.4" y1="5.6" x2="19.8" y2="4.2" />'+
+'</g>'+
+'</svg>'+
+'</span>'+
+'</label>';this.checkbox=this.parentElement.querySelector("#darkModeToggle");this.label=this.parentElement.querySelector("#theme-label-header-span");}
+rigEventListeners(){this.checkbox.title="Toggle Light/Dark Page Theme"
+this.checkbox.addEventListener("change",()=>{this.handleThemeChange()})}
+handleThemeChange(){const newTheme=this.checkbox.checked?"light":"dark"
+this.setTheme(newTheme)}
+setTheme(theme){this.currentTheme=theme
+const htmlTag=document.documentElement
+if(theme==="light"){htmlTag.classList.remove("dark-theme")
+htmlTag.classList.add("light-theme")
+localStorage.setItem("theme","light")
+window.theme="light"
+this.label.innerText="Light Theme"
+this.checkbox.checked=true}else{htmlTag.classList.remove("light-theme")
+htmlTag.classList.add("dark-theme")
+localStorage.setItem("theme","dark")
+window.theme="dark"
+this.label.innerText="Dark Theme"
+this.checkbox.checked=false}
+this.updateCharts()}
+updateToggleState(){this.checkbox.checked=this.currentTheme==="light"
+this.label.innerText=this.currentTheme.replace(/\b\w/g,char=>char.toUpperCase())+" Theme"}
+updateCharts(){if(window.SSPICharts&&Array.isArray(window.SSPICharts)){window.SSPICharts.forEach((chartObj)=>{if(chartObj&&typeof chartObj.setTheme==='function'){chartObj.setTheme(window.theme)}})}}
+getTheme(){return this.currentTheme}}
+class NotificationManager{constructor(){this.notifications=[];this.history=[];this.nextId=0;}
+show(message,type='info',duration=3000){const id=this.nextId++;const notification=document.createElement('div');notification.dataset.notificationId=id;notification.style.cssText=`position:fixed;top:20px;right:20px;padding:15px 20px;border-radius:5px;color:white;font-weight:normal;z-index:10000;max-width:450px;box-shadow:0 4px 6px rgba(0,0,0,0.1);animation:slideInRight 0.3s ease-out;word-wrap:break-word;line-height:1.4;white-space:pre-line;`;switch(type){case'success':notification.style.backgroundColor='#4CAF50';break;case'error':notification.style.backgroundColor='#f44336';break;case'warning':notification.style.backgroundColor='#ff9800';break;default:notification.style.backgroundColor='#2196F3';}
+notification.textContent=message;this._stackNotification(notification);const notificationObj={id,element:notification,message,type,timestamp:Date.now()};this.notifications.push(notificationObj);this.history.push({...notificationObj,dismissed:false});if(duration>0){setTimeout(()=>{this.clear(id);},duration);}
+return notificationObj;}
+_stackNotification(notification){const existingNotifications=document.querySelectorAll('[data-notification-id]');let topOffset=20;existingNotifications.forEach(existing=>{const rect=existing.getBoundingClientRect();topOffset=Math.max(topOffset,rect.bottom-document.documentElement.getBoundingClientRect().top+10);});notification.style.top=topOffset+'px';document.body.appendChild(notification);}
+clear(id){const index=this.notifications.findIndex(n=>n.id===id);if(index===-1)return;const notificationObj=this.notifications[index];const notification=notificationObj.element;if(notification&&notification.parentNode){notification.style.animation='slideOutRight 0.3s ease-in';setTimeout(()=>{if(notification.parentNode){notification.parentNode.removeChild(notification);}},300);}
+this.notifications.splice(index,1);const historyEntry=this.history.find(h=>h.id===id);if(historyEntry){historyEntry.dismissed=true;historyEntry.dismissedAt=Date.now();}
+this._restackNotifications();}
+_restackNotifications(){setTimeout(()=>{const existingNotifications=document.querySelectorAll('[data-notification-id]');let topOffset=20;existingNotifications.forEach(notification=>{notification.style.top=topOffset+'px';const rect=notification.getBoundingClientRect();topOffset=rect.bottom-document.documentElement.getBoundingClientRect().top+10;});},50);}
+clearAll(){const ids=this.notifications.map(n=>n.id);ids.forEach(id=>this.clear(id));}
+getHistory(limit=50){return this.history.slice(-limit);}
+clearHistory(){this.history=[];}
+success(message,duration=3000){return this.show(message,'success',duration);}
+error(message,duration=5000){return this.show(message,'error',duration);}
+warning(message,duration=4000){return this.show(message,'warning',duration);}
+info(message,duration=3000){return this.show(message,'info',duration);}}
+window.notifications=new NotificationManager();class SearchableDropdown{constructor(selectElement,options={}){this.originalSelect=selectElement;this.options={placeholder:options.placeholder||'Search...',onChange:options.onChange||(()=>{}),...options};this.parseOptions();this.createDropdown();this.isOpen=false;this.selectedValue=this.originalSelect.value;this.selectedLabel=this.getSelectedLabel();this.filteredOptions=[...this.allOptions];this.highlightedIndex=-1;this.bindEvents();this.originalSelect.style.display='none';this.originalSelect.parentNode.insertBefore(this.container,this.originalSelect.nextSibling);this.updateSelectedDisplay();}
+parseOptions(){this.groups=[];this.allOptions=[];const children=Array.from(this.originalSelect.children);children.forEach(child=>{if(child.tagName==='OPTGROUP'){const groupLabel=child.label;const groupOptions=Array.from(child.children).map(option=>({value:option.value,label:option.textContent,group:groupLabel,selected:option.selected}));this.groups.push({label:groupLabel,options:groupOptions});this.allOptions.push(...groupOptions);}else if(child.tagName==='OPTION'){const option={value:child.value,label:child.textContent,group:null,selected:child.selected};if(child.value){this.allOptions.push(option);}}});}
+createDropdown(){this.container=document.createElement('div');this.container.className='searchable-dropdown';this.selectedDisplay=document.createElement('div');this.selectedDisplay.className='searchable-dropdown-selected';this.selectedDisplay.innerHTML=`<span class="searchable-dropdown-label"></span><svg class="searchable-dropdown-arrow"width="12"height="12"viewBox="0 0 12 12"><path d="M2 4 L6 8 L10 4"stroke="currentColor"stroke-width="2"fill="none"stroke-linecap="round"/></svg>`;this.container.appendChild(this.selectedDisplay);this.panel=document.createElement('div');this.panel.className='searchable-dropdown-panel';this.searchInput=document.createElement('input');this.searchInput.type='text';this.searchInput.className='searchable-dropdown-search';this.searchInput.placeholder=this.options.placeholder;this.panel.appendChild(this.searchInput);this.optionsList=document.createElement('div');this.optionsList.className='searchable-dropdown-options';this.panel.appendChild(this.optionsList);this.container.appendChild(this.panel);}
+bindEvents(){console.log('[SearchableDropdown] Binding events to search input:',this.searchInput);this.selectedDisplay.addEventListener('click',(e)=>{e.stopPropagation();this.toggle();});this.searchInput.addEventListener('input',(e)=>{this.filterOptions(e.target.value);});this.searchInput.addEventListener('keydown',(e)=>{console.log('[SearchableDropdown] Keydown event fired on search input');this.handleKeyDown(e);});document.addEventListener('click',(e)=>{if(!this.container.contains(e.target)){this.close();}});this.optionsList.addEventListener('click',(e)=>{const optionEl=e.target.closest('.searchable-dropdown-option');if(optionEl){const value=optionEl.dataset.value;this.selectOption(value);}});}
+toggle(){if(this.isOpen){this.close();}else{this.open();}}
+open(){console.log('[SearchableDropdown] Opening dropdown');this.isOpen=true;this.container.classList.add('is-open');this.searchInput.value='';this.filterOptions('');this.searchInput.focus();console.log('[SearchableDropdown] Search input focused, active element:',document.activeElement===this.searchInput);this.highlightedIndex=-1;console.log('[SearchableDropdown] Dropdown opened with',this.filteredOptions.length,'options, highlightedIndex reset to -1');}
+close(){console.log('[SearchableDropdown] Closing dropdown');this.isOpen=false;this.container.classList.remove('is-open');this.highlightedIndex=-1;this.searchInput.value='';this.searchInput.blur();console.log('[SearchableDropdown] Dropdown closed, is-open class removed:',!this.container.classList.contains('is-open'));}
+filterOptions(query){const lowerQuery=query.toLowerCase();if(!query){this.filteredOptions=[...this.allOptions];}else{this.filteredOptions=this.allOptions.filter(option=>{return option.label.toLowerCase().includes(lowerQuery)||option.value.toLowerCase().includes(lowerQuery);});}
+this.renderOptions();this.highlightedIndex=-1;}
+renderOptions(){this.optionsList.innerHTML='';if(this.filteredOptions.length===0){this.optionsList.innerHTML='<div class="searchable-dropdown-no-results">No results found</div>';return;}
+const grouped={};this.filteredOptions.forEach(option=>{const group=option.group||'Other';if(!grouped[group]){grouped[group]=[];}
+grouped[group].push(option);});Object.entries(grouped).forEach(([groupLabel,options])=>{const groupEl=document.createElement('div');groupEl.className='searchable-dropdown-group';const groupLabelEl=document.createElement('div');groupLabelEl.className='searchable-dropdown-group-label';groupLabelEl.textContent=groupLabel;groupEl.appendChild(groupLabelEl);options.forEach(option=>{const optionEl=document.createElement('div');optionEl.className='searchable-dropdown-option';optionEl.dataset.value=option.value;if(option.value===this.selectedValue){optionEl.classList.add('is-selected');}
+optionEl.textContent=option.label;groupEl.appendChild(optionEl);});this.optionsList.appendChild(groupEl);});}
+selectOption(value){this.originalSelect.value=value;this.selectedValue=value;this.selectedLabel=this.getSelectedLabel();this.updateSelectedDisplay();this.close();const event=new Event('change',{bubbles:true});this.originalSelect.dispatchEvent(event);this.options.onChange(value);}
+getSelectedLabel(){const option=this.allOptions.find(opt=>opt.value===this.selectedValue);return option?option.label:(this.originalSelect.querySelector('option[value=""]')?.textContent||'Select...');}
+updateSelectedDisplay(){const label=this.container.querySelector('.searchable-dropdown-label');label.textContent=this.selectedLabel;if(!this.selectedValue){label.classList.add('is-placeholder');}else{label.classList.remove('is-placeholder');}}
+handleKeyDown(e){const options=Array.from(this.optionsList.querySelectorAll('.searchable-dropdown-option'));console.log('[SearchableDropdown] Key pressed:',e.key,'Options count:',options.length,'Current index:',this.highlightedIndex);switch(e.key){case'ArrowDown':e.preventDefault();const newDownIndex=Math.min(this.highlightedIndex+1,options.length-1);console.log('[SearchableDropdown] ArrowDown: index',this.highlightedIndex,'->',newDownIndex);this.highlightedIndex=newDownIndex;this.updateHighlight(options);break;case'ArrowUp':e.preventDefault();const newUpIndex=Math.max(this.highlightedIndex-1,0);console.log('[SearchableDropdown] ArrowUp: index',this.highlightedIndex,'->',newUpIndex);this.highlightedIndex=newUpIndex;this.updateHighlight(options);break;case'Enter':e.preventDefault();console.log('[SearchableDropdown] Enter pressed, index:',this.highlightedIndex);if(this.highlightedIndex>=0&&options[this.highlightedIndex]){const value=options[this.highlightedIndex].dataset.value;this.selectOption(value);}
+break;case'Escape':e.preventDefault();console.log('[SearchableDropdown] Escape pressed');this.close();break;}}
+updateHighlight(options){console.log('[SearchableDropdown] updateHighlight called, highlighting index:',this.highlightedIndex,'of',options.length,'options');options.forEach((option,index)=>{if(index===this.highlightedIndex){console.log('[SearchableDropdown] Adding highlight to option:',option.textContent);option.classList.add('is-highlighted');option.scrollIntoView({block:'nearest'});}else{option.classList.remove('is-highlighted');}});}
+getValue(){return this.selectedValue;}
+setValue(value){this.selectOption(value);}
+destroy(){this.container.remove();this.originalSelect.style.display='';}}
+class YearSlider{constructor(options){this.containerId=options.containerId;this.minYear=options.minYear;this.maxYear=options.maxYear;this.storageKey=options.storageKey||`yearSlider_${this.containerId}`;this.playStorageKey=`${this.storageKey}_playing`;this.playInterval=options.playInterval||1200;this.enablePlayback=options.enablePlayback!==false;this.onChange=options.onChange||(()=>{});const storedYear=window.observableStorage?.getItem(this.storageKey);this.year=storedYear||options.initialYear||this.maxYear;this.year=Math.max(this.minYear,Math.min(this.maxYear,this.year));const storedPlaying=window.observableStorage?.getItem(this.playStorageKey);this.playing=storedPlaying||false;this.playIntervalId=null;this.build();this.attachEventListeners();if(this.playing){this.startPlay();}}
+build(){this.container=document.createElement('div');this.container.id=this.containerId;this.container.classList.add('globe-year-slider-container');const playPauseButton=this.enablePlayback?`<button class="year-play-pause-button"aria-label="Play timeline"><span class="play-icon">▶</span><span class="pause-icon"style="display:none;">⏸</span></button>`:'';this.container.innerHTML=`<div class="year-slider-controls"><label class="year-slider-label"for="${this.containerId}-input"><span class="year-value-display"contenteditable="true"spellcheck="false">${this.year}</span></label><div class="year-slider-wrapper"><div class="year-slider-track-container"><div class="year-slider-ticks"></div><input
+type="range"
+class="year-slider-input"
+id="${this.containerId}-input"
+min="${this.minYear}"
+max="${this.maxYear}"
+value="${this.year}"
+step="1"/
+></div><div class="year-slider-bounds"><span class="year-slider-min">${this.minYear}</span><span class="year-slider-max">${this.maxYear}</span></div></div>${playPauseButton}</div>`;}
+attachEventListeners(){this.input=this.container.querySelector('.year-slider-input');this.display=this.container.querySelector('.year-value-display');this.input.addEventListener('input',(e)=>{if(this.playing){this.stopPlay();}
+this.setYear(parseInt(e.target.value));});this.display.addEventListener('keydown',(e)=>{if(e.key==='Enter'){e.preventDefault();this.display.blur();}else if(!/^\d$/.test(e.key)&&!['Backspace','Delete','ArrowLeft','ArrowRight','Tab'].includes(e.key)){e.preventDefault();}});this.display.addEventListener('blur',()=>{const inputYear=parseInt(this.display.textContent.trim());if(isNaN(inputYear)||inputYear<this.minYear||inputYear>this.maxYear){this.display.textContent=this.year;this.display.classList.add('year-input-error');setTimeout(()=>{this.display.classList.remove('year-input-error');},500);}else if(inputYear!==this.year){if(this.playing){this.stopPlay();}
+this.setYear(inputYear);}else{this.display.textContent=this.year;}});if(this.enablePlayback){this.playPauseButton=this.container.querySelector('.year-play-pause-button');this.playIcon=this.container.querySelector('.play-icon');this.pauseIcon=this.container.querySelector('.pause-icon');this.playPauseButton.addEventListener('click',()=>{this.togglePlay();});}}
 setYear(year,silent=false){year=Math.max(this.minYear,Math.min(this.maxYear,year));this.year=year;this.input.value=year;this.display.textContent=year;if(window.observableStorage){window.observableStorage.setItem(this.storageKey,year);}
 if(!silent){this.onChange(year);}}
 updateRange(minYear,maxYear){this.minYear=minYear;this.maxYear=maxYear;this.input.min=minYear;this.input.max=maxYear;this.container.querySelector('.year-slider-min').textContent=minYear;this.container.querySelector('.year-slider-max').textContent=maxYear;if(this.year<minYear||this.year>maxYear){this.setYear(Math.max(minYear,Math.min(maxYear,this.year)));}}

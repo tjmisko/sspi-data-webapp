@@ -412,6 +412,52 @@
   white-space: nowrap;
 }
 
+/* Inline math in captions keeps the caption's size so it doesn't stretch
+   the line boxes JustifiedCaptions measures. */
+.methodology-figure-caption .katex {
+  font-size: 1em;
+}
+
+/* Labeled equation rows: a quiet HTML label beside each KaTeX equation. */
+.methodology-equation-rows {
+  font-size: 90%;
+  display: grid;
+  grid-template-columns: max-content max-content max-content;
+  justify-content: center;
+  align-items: baseline;
+  column-gap: 0.3em;
+  row-gap: 0.6rem;
+}
+
+.methodology-equation-label {
+  margin-right: 1.03rem;
+  color: var(--low-importance-font-color);
+  font-family: var(--body-font-family);
+  font-size: 0.54rem;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: right;
+}
+
+.methodology-equation-lhs {
+  text-align: right;
+}
+
+.methodology-equation-rhs {
+  text-align: left;
+}
+
+/* KaTeX centers display math on its own inner element, so the alignment
+   has to be set there or every cell's content floats to its middle. */
+.methodology-equation-lhs .katex-display,
+.methodology-equation-rhs .katex-display,
+.methodology-equation-lhs .katex-display > .katex,
+.methodology-equation-rhs .katex-display > .katex {
+  margin: 0;
+  text-align: inherit;
+}
+
 /* Figures ------------------------------------------------------------------- */
 
 .methodology-figure {
@@ -516,7 +562,7 @@
 .methodology-page .gp-caption {
   fill: var(--header-text-color);
   font-family: var(--body-font-family);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 600;
 }
 
@@ -578,15 +624,92 @@
   --node-color: var(--pg-accent);
 }
 
+/* Hovering a node in the tree lights up the equation for its level in that
+   node's color, tying the two halves of the figure together. */
+.methodology-page .hierarchy-equations .methodology-equation-label[data-level] {
+  color: var(--hover-color, var(--low-importance-font-color));
+  transition: color 0.15s ease;
+}
+
+.hierarchy-stage:has(.hy-node-root:hover) .hierarchy-equations [data-level="overall"] {
+  --hover-color: var(--methodology-accent);
+}
+
+.hierarchy-stage:has(.hy-node-sus[data-level="pillar"]:hover) .hierarchy-equations [data-level="pillar"],
+.hierarchy-stage:has(.hy-node-sus[data-level="category"]:hover) .hierarchy-equations [data-level="category"] {
+  --hover-color: var(--sus-accent);
+}
+
+.hierarchy-stage:has(.hy-node-ms[data-level="pillar"]:hover) .hierarchy-equations [data-level="pillar"] {
+  --hover-color: var(--ms-accent);
+}
+
+.hierarchy-stage:has(.hy-node-pg[data-level="pillar"]:hover) .hierarchy-equations [data-level="pillar"] {
+  --hover-color: var(--pg-accent);
+}
+
 .methodology-page .hy-node-dim rect {
   fill: color-mix(in srgb, var(--node-color) 12%, var(--box-background-color));
   stroke: color-mix(in srgb, var(--node-color) 45%, transparent);
 }
 
+/* Sits centered on the bracket line; the stroke knocks the line out behind
+   the label the same way the edge weights do. */
+/* Aggregation equations sit in the empty lower-right of the tree. The stage
+   is a size container so the panel scales with the SVG and keeps its place
+   in the diagram; on narrow screens it falls back below the tree. */
+.hierarchy-stage {
+  position: relative;
+  container-type: inline-size;
+}
+
+.methodology-page .hierarchy-equations {
+  margin: 0.6rem 0 0 0;
+  padding: 1.2em 1em 1.1em 0.9em;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background-color: color-mix(in srgb, var(--box-background-color) 88%, transparent);
+  width: max-content;
+  max-width: 100%;
+  overflow-x: visible;
+}
+
+.methodology-page .hierarchy-equations .methodology-equation-label {
+  font-size: 0.77em;
+}
+
+@media (min-width: 640px) {
+  /* Room below the tree so the panel can sit lower than the indicator row. */
+  .hierarchy-stage {
+    padding-bottom: 2cqw;
+  }
+
+  .methodology-page .hierarchy-equations {
+    position: absolute;
+    right: 2.5cqw;
+    bottom: 0;
+    margin: 0;
+    font-size: 2.06cqw;
+  }
+}
+
 .methodology-page .hy-aside {
   fill: var(--low-importance-font-color);
   font-family: var(--body-font-family);
-  font-size: 11.5px;
+  font-size: 9px;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  paint-order: stroke;
+  stroke: var(--page-background);
+  stroke-width: 5px;
+  stroke-linejoin: round;
+}
+
+/* Bracket under the elided category blocks; its label sits on its line. */
+.methodology-page .hy-bracket {
+  fill: none;
+  stroke: var(--border-color);
+  stroke-width: 1;
 }
 
 /* Weights table ------------------------------------------------------------- */

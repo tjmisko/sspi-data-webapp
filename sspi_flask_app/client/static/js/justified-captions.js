@@ -31,9 +31,18 @@ class JustifiedCaptions {
         return Math.max(1, Math.round(caption.getBoundingClientRect().height / lineHeight))
     }
 
-    setWidth(caption, width, fullWidth) {
+    // Width of the caption's container, minus its padding, so the caption
+    // is centered on the column rather than on its own natural width.
+    outerWidth(caption) {
+        const parent = caption.parentElement
+        const style = window.getComputedStyle(parent)
+        const padding = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight)
+        return parent.clientWidth - (Number.isNaN(padding) ? 0 : padding)
+    }
+
+    setWidth(caption, width, outerWidth) {
         caption.style.width = width + 'px'
-        const margin = (fullWidth - width) / 2
+        const margin = Math.max(0, (outerWidth - width) / 2)
         caption.style.marginLeft = margin + 'px'
         caption.style.marginRight = margin + 'px'
     }
@@ -51,11 +60,14 @@ class JustifiedCaptions {
     fitOne(caption) {
         this.reset(caption)
         const fullWidth = caption.getBoundingClientRect().width
-        if (fullWidth === 0) {
+        const outerWidth = this.outerWidth(caption)
+        if (fullWidth === 0 || outerWidth === 0) {
             return
         }
-        const widest = Math.ceil(fullWidth * (1 + this.slack))
-        this.setWidth(caption, widest, fullWidth)
+        // The box may grow past its natural width by `slack`, but never
+        // past its container, so it can't push the page into overflow.
+        const widest = Math.min(Math.ceil(fullWidth * (1 + this.slack)), Math.floor(outerWidth))
+        this.setWidth(caption, widest, outerWidth)
         const targetLines = this.lineCount(caption)
         if (targetLines < 2) {
             this.reset(caption)
@@ -67,13 +79,13 @@ class JustifiedCaptions {
         let high = widest
         while (low < high) {
             const mid = Math.floor((low + high) / 2)
-            this.setWidth(caption, mid, fullWidth)
+            this.setWidth(caption, mid, outerWidth)
             if (this.lineCount(caption) > targetLines) {
                 low = mid + 1
             } else {
                 high = mid
             }
         }
-        this.setWidth(caption, high, fullWidth)
+        this.setWidth(caption, high, outerWidth)
     }
 }

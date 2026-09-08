@@ -358,29 +358,12 @@
                     <p>
                         Every indicator is set up so that a higher score represents a
                         policy oriented toward a better outcome, and every indicator is
-                        normalized to a value between 0 and 1, so that widely varying
-                        data are expressed in comparable units. Normalization uses a
+                        normalized to a value between 0 and 1 to enable aggregation (see below). Normalization uses a
                         pair of <strong>goalposts</strong>: a lower goalpost
                         representing a hypothetical minimum for the policy variable and
                         an upper goalpost representing a hypothetical maximum. Values
                         beyond either goalpost are censored at that goalpost.
                     </p>
-
-                    <figure class="methodology-formula">
-                        <div class="methodology-equation">
-                            \[
-                            \text{score} = \max\left(0,\ \min\left(1,\
-                            \frac{\text{value} - \text{LG}}{\text{UG} - \text{LG}}
-                            \right)\right)
-                            \]
-                        </div>
-                        <figcaption class="methodology-figure-caption">
-                            LG is the lower goalpost and UG the upper goalpost. Values
-                            at or below LG score 0, values at or above UG score 1.
-                            The score is linear between the goalposts.
-                        </figcaption>
-                    </figure>
-
                     <p>
                         This follows the goalposting used for the Human Development
                         Index, whose dimension indices (the equivalent of our
@@ -388,25 +371,27 @@
                         against minima and maxima set from both historical evidence and
                         achievability.
                     </p>
+                    <figure class="methodology-formula">
+                        <div class="methodology-equation">
+                            \[
+                            \text{Score\,}_{c,i,t} = \max\left(0,\ \min\left(1,\
+                            \frac{\text{Value\,}_{c,i,t} - \text{LG}}{\text{UG} - \text{LG}}
+                            \right)\right)
+                            \]
+                        </div>
+                        <figcaption class="methodology-figure-caption">
+                            \(\text{LG}\): lower goalpost; \(\text{UG}\): upper goalpost.
+                        </figcaption>
+                    </figure>
 
-                    <h3 class="methodology-subheading">Inverting an indicator by swapping its goalposts</h3>
                     <p>
                         For some policy variables a higher value indicates weaker
                         policy: the homicide rate, the Gini coefficient, and energy
                         intensity are examples. The SSPI inverts these indicators by
                         placing the larger value in the lower-goalpost position. The
-                        formula is unchanged, and the score decreases in the raw value.
-                        The Gini coefficient after taxes and transfers, for example, is
-                        scored with goalposts of 70 and 20, so a Gini of 70 scores 0 and
-                        a Gini of 20 or better scores 1. Of the {{ indicator_count }}
-                        indicators, {{ inverted_count }} are scored this way{% if
-                        partly_inverted_count == 1 %}, and one further indicator
-                        combines components running in both directions{% elif
-                        partly_inverted_count %}, and {{ partly_inverted_count }}
-                        further indicators combine components running in both
-                        directions{% endif %}.
-                    </p>
-
+                        "lower" in lower goalpost corresponds to the direction indicating
+                        poorer policy, which does not necessarily correspond to the 
+                        magnitude of the value.
                     <figure class="methodology-figure">
                         <div class="goalpost-figure">
                             <svg class="goalpost-svg" viewBox="0 0 320 210" role="img"
@@ -425,12 +410,12 @@
                                 <circle class="gp-knot" cx="234" cy="34" r="3.5"/>
                                 <text class="gp-tick" x="38" y="160" text-anchor="end">0</text>
                                 <text class="gp-tick" x="38" y="38" text-anchor="end">1</text>
-                                <text class="gp-axis-label" x="14" y="95" text-anchor="middle" transform="rotate(-90 14 95)">score</text>
+                                <text class="gp-axis-label" x="14" y="95" text-anchor="middle" transform="rotate(-90 14 95)">Score</text>
                                 <text class="gp-tick" x="86" y="180" text-anchor="middle">0%</text>
                                 <text class="gp-tick" x="234" y="180" text-anchor="middle">100%</text>
                                 <text class="gp-post-label" x="86" y="196" text-anchor="middle">lower</text>
                                 <text class="gp-post-label" x="234" y="196" text-anchor="middle">upper</text>
-                                <text class="gp-caption" x="44" y="18">BIODIV &mdash; protected share of important sites</text>
+                                <text class="gp-caption" x="8" y="18">BIODIV &mdash; Protected Share of Important Sites</text>
                             </svg>
                             <svg class="goalpost-svg" viewBox="0 0 320 210" role="img"
                                  aria-labelledby="goalpost-inverted-title goalpost-inverted-desc">
@@ -448,23 +433,29 @@
                                 <circle class="gp-knot" cx="240" cy="156" r="3.5"/>
                                 <text class="gp-tick" x="38" y="160" text-anchor="end">0</text>
                                 <text class="gp-tick" x="38" y="38" text-anchor="end">1</text>
-                                <text class="gp-axis-label" x="14" y="95" text-anchor="middle" transform="rotate(-90 14 95)">score</text>
+                                <text class="gp-axis-label" x="14" y="95" text-anchor="middle" transform="rotate(-90 14 95)">Score</text>
                                 <text class="gp-tick" x="80" y="180" text-anchor="middle">20</text>
                                 <text class="gp-tick" x="240" y="180" text-anchor="middle">70</text>
                                 <text class="gp-post-label" x="80" y="196" text-anchor="middle">upper</text>
                                 <text class="gp-post-label" x="240" y="196" text-anchor="middle">lower</text>
-                                <text class="gp-caption" x="44" y="18">GINIPT &mdash; Gini coefficient after taxes</text>
+                                <text class="gp-caption" x="8" y="18">GINIPT &mdash; Gini Coefficient After Taxes</text>
                             </svg>
                         </div>
                         <figcaption class="methodology-figure-caption">
-                            The goalpost formula in both directions. With 70 as the
-                            lower goalpost and 20 as the upper, the score decreases in
-                            the raw value. The shaded bands mark the censored regions,
-                            where differences in the raw value do not change the score.
+                            The goalpost formula applied to inverted and non-inverted
+                            indicators. BIODIV is scored with \(\text{LG} = 0\%\) and
+                            \(\text{UG} = 100\%\). GINIPT is inverted, with
+                            \(\text{LG} = 70\) and \(\text{UG} = 20\), so that a Gini
+                            of 70 scores 0 and a Gini of 20 or better scores 1.
+                            Of the {{ indicator_count }} indicators, {{ inverted_count }} are
+                            inverted. Shaded bands mark censored regions in which
+                            differences in value do not change the score.
                         </figcaption>
                     </figure>
+                    </p>
 
-                    <h3 class="methodology-subheading">Setting the goalposts</h3>
+
+                    <h3 class="methodology-subheading">Setting Goalposts</h3>
                     <p>
                         Setting the goalposts of an indicator shifts the center and
                         controls the spread of its score distribution while preserving
@@ -576,14 +567,14 @@
 
                     {{ section_head('aggregation') }}
                     <p>
-                        Aggregation is deliberately simple. All scores for index items 
+                        Aggregation is deliberately simple in the SSPI. All scores for index items 
                         are between zero and one, and each level of the index is
                         an unweighted arithmetic mean of the components of the level
                         below it.
                     </p>
 
                     <figure class="methodology-figure methodology-figure-tight">
-                        <div class="methodology-figure-scroll">
+                        <div class="methodology-figure-scroll hierarchy-stage">
                             <svg class="hierarchy-svg" viewBox="0 12 620 262" role="img"
                                  aria-labelledby="hierarchy-title hierarchy-desc">
                                 <title id="hierarchy-title">How indicator scores aggregate into the SSPI</title>
@@ -597,10 +588,10 @@
                                 <text class="hy-weight" x="405" y="70">1/{{ pillar_count }}</text>
 
                                 <line class="hy-edge" x1="120" y1="122" x2="61" y2="158"/>
-                                <line class="hy-edge" x1="120" y1="122" x2="121" y2="158"/>
-                                <line class="hy-edge" x1="120" y1="122" x2="161" y2="158"/>
-                                <line class="hy-edge" x1="120" y1="122" x2="201" y2="158"/>
-                                <line class="hy-edge" x1="120" y1="122" x2="241" y2="158"/>
+                                <line class="hy-edge" x1="120" y1="122" x2="133.8" y2="158"/>
+                                <line class="hy-edge" x1="120" y1="122" x2="169.3" y2="158"/>
+                                <line class="hy-edge" x1="120" y1="122" x2="204.8" y2="158"/>
+                                <line class="hy-edge" x1="120" y1="122" x2="240.3" y2="158"/>
                                 <text class="hy-weight" x="90.5" y="140">1/5</text>
 
                                 <line class="hy-edge" x1="61" y1="192" x2="60" y2="228"/>
@@ -608,39 +599,40 @@
                                 <text class="hy-weight" x="60.5" y="210">1/2</text>
                                 <text class="hy-weight" x="105.5" y="210">1/2</text>
 
-                                <g class="hy-node hy-node-root">
+                                <g class="hy-node hy-node-root" data-level="overall">
                                     <rect x="254" y="24" width="112" height="28" rx="6"/>
                                     <text x="310" y="42" text-anchor="middle">SSPI</text>
                                 </g>
 
-                                <g class="hy-node hy-node-sus">
+                                <g class="hy-node hy-node-sus" data-level="pillar">
                                     <rect x="64" y="88" width="112" height="34" rx="6"/>
                                     <text x="120" y="103" text-anchor="middle">Sustainability</text>
                                     <text class="hy-sub" x="120" y="116" text-anchor="middle">pillar</text>
                                 </g>
-                                <g class="hy-node hy-node-ms">
+                                <g class="hy-node hy-node-ms" data-level="pillar">
                                     <rect x="254" y="88" width="112" height="34" rx="6"/>
                                     <text x="310" y="103" text-anchor="middle">Market Structure</text>
                                     <text class="hy-sub" x="310" y="116" text-anchor="middle">pillar</text>
                                 </g>
-                                <g class="hy-node hy-node-pg">
+                                <g class="hy-node hy-node-pg" data-level="pillar">
                                     <rect x="444" y="88" width="112" height="34" rx="6"/>
                                     <text x="500" y="103" text-anchor="middle">Public Goods</text>
                                     <text class="hy-sub" x="500" y="116" text-anchor="middle">pillar</text>
                                 </g>
 
-                                <g class="hy-node hy-node-sus">
+                                <g class="hy-node hy-node-sus" data-level="category">
                                     <rect x="16" y="158" width="90" height="34" rx="6"/>
                                     <text x="61" y="173" text-anchor="middle">Ecosystem</text>
                                     <text class="hy-sub" x="61" y="186" text-anchor="middle">category</text>
                                 </g>
-                                <g class="hy-node hy-node-sus hy-node-dim">
-                                    <rect x="114" y="158" width="14" height="34" rx="4"/>
-                                    <rect x="154" y="158" width="14" height="34" rx="4"/>
-                                    <rect x="194" y="158" width="14" height="34" rx="4"/>
-                                    <rect x="234" y="158" width="14" height="34" rx="4"/>
+                                <g class="hy-node hy-node-sus hy-node-dim" data-level="category">
+                                    <rect x="126.1" y="158" width="15.4" height="34" rx="4"/>
+                                    <rect x="161.6" y="158" width="15.4" height="34" rx="4"/>
+                                    <rect x="197.1" y="158" width="15.4" height="34" rx="4"/>
+                                    <rect x="232.6" y="158" width="15.4" height="34" rx="4"/>
                                 </g>
-                                <text class="hy-aside" x="258" y="179">4 more categories</text>
+                                <path class="hy-bracket" d="M126.1 197 v4 H248 v-4"/>
+                                <text class="hy-aside" x="187.05" y="201">4 more categories</text>
 
                                 <g class="hy-node hy-node-sus">
                                     <rect x="20" y="228" width="80" height="34" rx="6"/>
@@ -653,11 +645,39 @@
                                     <text class="hy-sub" x="150" y="256" text-anchor="middle">indicator</text>
                                 </g>
                             </svg>
+                            <div class="methodology-equation methodology-equation-rows hierarchy-equations">
+                                <span class="methodology-equation-label" data-level="overall">Overall Score</span>
+                                <div class="methodology-equation-lhs" data-level="overall">\[ \text{Score}_{\scriptscriptstyle\text{SSPI}} \]</div>
+                                <div class="methodology-equation-rhs" data-level="overall">
+                                    \[
+                                    = {\large\tfrac{1}{ {{ pillar_count }} }} \sum_{\mathclap{p \in \text{SSPI}}} \text{Score}_p
+                                    \]
+                                </div>
+                                <span class="methodology-equation-label" data-level="pillar">Pillar Score</span>
+                                <div class="methodology-equation-lhs" data-level="pillar">\[ \text{Score}_p \]</div>
+                                <div class="methodology-equation-rhs" data-level="pillar">
+                                    \[
+                                    = {\large\tfrac{1}{\left|p\right|}} \sum_{\mathclap{c \in p}} \text{Score}_c
+                                    \]
+                                </div>
+                                <span class="methodology-equation-label" data-level="category">Category Score</span>
+                                <div class="methodology-equation-lhs" data-level="category">\[ \text{Score}_c \]</div>
+                                <div class="methodology-equation-rhs" data-level="category">
+                                    \[
+                                    = {\large\tfrac{1}{\left|c\right|}} \sum_{\mathclap{i \in c}} \text{Score}_i
+                                    \]
+                                </div>
+                            </div>
                         </div>
                     </figure>
+                    <h3 class="methodology-subheading">Equal Weighting: Interpretive Caveats</h3>
                     <p>
-                        We use equal weights because they are easy to understand, simple
-                        to interpret, and widely used. We recognize that equal-weight
+                        We use equal weights at each level of the SSPI because they
+                        are easy to understand, widely used in the literature, and 
+                        support the design and interpretability goals of the SSPI.
+                    </p>
+                    <p>
+We recognize that equal-weight
                         aggregation at each level is arbitrary, imposing uneven
                         weighting at the overall index level because of variation in the
                         indicator-per-category count and category-per-pillar count. This
@@ -668,15 +688,19 @@
                         weighting at the overall level.
                     </p>
                     <p>
-                        Equal weights within a category imply that all policy indicators
-                        are equally important within the category. Equal weights within
+                        Weighting decisions carry implications for "importance" in the construction
+                        of a policy index. Equal weights within a category imply that all policy indicators
+                        are equally important within the category, just as equal weights within
                         a pillar imply that all categories are equally important within
-                        the pillar. Finally, even weighting across the three pillars
+                        the pillar, and even weighting across the three pillars
                         implies that each has equal importance. We do not believe we are
                         in a position to evaluate scientifically the commensurability of
                         indicators, categories, and pillars, and still less in a
                         position to encode such a judgement into prescriptive,
-                        universally valid weights. Nevertheless, we do believe that the
+                        universally valid weights. 
+                    </p>
+                    <p>
+                        Nevertheless, we do believe that the
                         SSPI identifies and measures a bundle of policies which are
                         universally applicable, should a country want to deliver
                         sustainable and shared prosperity, and we do want to compute
@@ -695,48 +719,28 @@
                         with fixed equal weights.
                     </p>
 
-                    <figure class="methodology-formula">
-                        <div class="methodology-equation">
-                            \[
-                            \begin{aligned}
-                            \text{Score}_{\text{Category}} &amp;= \frac{\sum_{i \in \text{Category}} \text{Score}_i}{\left|\text{Category}\right|} \\[1em]
-                            \text{Score}_{\text{Pillar}} &amp;= \frac{\sum_{c \in \text{Pillar}} \text{Score}_c}{\left|\text{Pillar}\right|} \\[1em]
-                            \text{Score}_{\text{SSPI}} &amp;= \frac{1}{ {{ pillar_count }} } \sum_{p \in \text{Pillars}} \text{Score}_p
-                            \end{aligned}
-                            \]
-                        </div>
-                        <figcaption class="methodology-figure-caption">
-                            <em>i</em> ranges over the indicators in a category,
-                            <em>c</em> over the categories in a pillar, and <em>p</em>
-                            over the {{ pillar_count }} pillars. |Category| and |Pillar|
-                            are the number of indicators in the category and the number
-                            of categories in the pillar.
-                        </figcaption>
-                    </figure>
-
-                    <h3 class="methodology-subheading">Implied indicator weights</h3>
+                    <h3 class="methodology-subheading">Implied Indicator Weights at the Overall Level</h3>
                     <p>
-                        The weight of an indicator in the SSPI depends on its position
-                        in the tree. A category divides its weight equally among its
-                        indicators and a pillar divides its weight equally among its
-                        categories, so the share of the index carried by a single
-                        indicator is:
+                        The SSPI is linear across its levels of aggregation, so we can easily
+                        compute an "implied weight" of an indicator for computing the SSPI were
+                        we to throw away the heirarchical structure and just think of the SSPI
+                        as a linear combination of {{ indicator_count }} indicators. 
+                        on the composition of the index, and in particular on its neighbors 
+                        in a category and the number of categories in its pillar. 
+                        A category divides its weight equally among its indicators, 
+                        and a pillar divides its weight equally among its
+                        categories, so the share of the index carried by a single indicator is:
                     </p>
 
                     <figure class="methodology-formula">
                         <div class="methodology-equation">
                             \[
                             \text{Weight}_i =
-                            \frac{1}{\left|\text{Category}\right|
-                                      \times \left|\text{Pillar}\right|
-                                      \times {{ pillar_count }}}
+                            \frac{1}{\left|\text{Category}_i\right|
+                                      \times \left|\text{Pillar}_i\right|
+                                      \times {{ pillar_count }}}.
                             \]
                         </div>
-                        <figcaption class="methodology-figure-caption">
-                            |Category| is the number of indicators in the category of
-                            indicator <em>i</em>, and |Pillar| the number of categories
-                            in its pillar.
-                        </figcaption>
                     </figure>
 
                     {% set max_weight = weight_rows[0].weight_percent %}
@@ -954,13 +958,17 @@
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     new MethodologyContents();
-    new JustifiedCaptions();
+    // Render math before fitting captions so widths reflect the typeset text.
     if (typeof renderMathInElement === 'function') {
         renderMathInElement(document.querySelector('.methodology-article'), {
-            delimiters: [{ left: '\\[', right: '\\]', display: true }],
+            delimiters: [
+                { left: '\\[', right: '\\]', display: true },
+                { left: '\\(', right: '\\)', display: false }
+            ],
             throwOnError: false
         });
     }
+    new JustifiedCaptions();
 });
 </script>
 {% endblock %}
