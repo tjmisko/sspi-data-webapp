@@ -392,3 +392,49 @@ def test_get_country_code_standard_countries(mock_pycountry):
         result = get_country_code(country_name)
         assert result == expected_code
         mock_pycountry.countries.lookup.assert_called_with(country_name)
+
+def test_should_return_prk_when_name_marks_korea_as_north_or_democratic():
+    """Regression for I-12: 'North Korea' used to fall into the KOR branch."""
+    north_korea_variants = [
+        "North Korea",
+        "Korea, North",
+        "Democratic People's Republic of Korea",
+        "north korea",
+        "KOREA, NORTH"
+    ]
+
+    for variant in north_korea_variants:
+        result = get_country_code(variant)
+        assert result == "PRK", f"Failed for North Korea variant: {variant}"
+
+
+def test_should_return_kor_when_name_marks_korea_as_south_or_republic():
+    """South Korea spellings must keep resolving to KOR after the reorder."""
+    south_korea_variants = [
+        "South Korea",
+        "Korea, Republic of",
+        "Republic of Korea",
+        "Korea, South",
+        "Korea Rep."
+    ]
+
+    for variant in south_korea_variants:
+        result = get_country_code(variant)
+        assert result == "KOR", f"Failed for South Korea variant: {variant}"
+
+
+def test_should_resolve_korea_without_calling_pycountry():
+    """Both Korea branches are edge cases and must short-circuit the lookup."""
+    with patch('sspi_flask_app.api.resources.utilities.pycountry') as mock_pycountry:
+        assert get_country_code("North Korea") == "PRK"
+        assert get_country_code("South Korea") == "KOR"
+        mock_pycountry.countries.lookup.assert_not_called()
+
+
+def test_should_return_input_name_unchanged_when_lookup_fails():
+    """Failure-path contract relied on by sipri.py, prisonstudies.py and fsi.py."""
+    with patch('sspi_flask_app.api.resources.utilities.pycountry') as mock_pycountry:
+        mock_pycountry.countries.lookup.side_effect = LookupError("nope")
+        result = get_country_code("Not A Real Place")
+        assert result == "Not A Real Place"
+        assert result is not None
