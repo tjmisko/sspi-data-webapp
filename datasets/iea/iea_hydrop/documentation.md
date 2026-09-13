@@ -2,8 +2,7 @@
 DatasetType: Intermediate
 DatasetName: Energy from Hydropower
 DatasetCode: IEA_HYDROP
-Description: Percentage of total final energy consumption generated from Hydroelectric
-  sources
+Description: Total energy supply from hydropower (IEA product HYDRO), in terajoules
 Unit: TJ
 Source:
   OrganizationCode: IEA

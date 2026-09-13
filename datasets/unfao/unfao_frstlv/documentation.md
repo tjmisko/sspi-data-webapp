@@ -2,7 +2,7 @@
 DatasetType: Intermediate
 DatasetName: Level of Forest Cover
 DatasetCode: UNFAO_FRSTLV
-Description: Level of Natually Regenerating Forest Cover (in 1000ha)
+Description: Level of naturally regenerating forest cover (in 1000 ha)
 Unit: 1000 ha
 Source:
   OrganizationCode: UNFAO

@@ -2,7 +2,8 @@
 DatasetType: Intermediate
 DatasetName: Energy from Geothermal
 DatasetCode: IEA_GEOPWR
-Description: Percentage of total final energy consumption generated from Geothermal
+Description: Total energy supply from geothermal, wind, solar and other sources
+  (IEA product GEOTHERM, labelled "Wind, solar, etc."), in terajoules
 Unit: TJ
 Source:
   OrganizationCode: IEA

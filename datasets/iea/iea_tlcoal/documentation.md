@@ -2,7 +2,7 @@
 DatasetType: Intermediate
 DatasetName: Energy from Coal
 DatasetCode: IEA_TLCOAL
-Description: Percentage of total final energy consumption generated from Coal
+Description: Total energy supply from coal (IEA product COAL), in terajoules
 Unit: TJ
 Source:
   OrganizationCode: IEA

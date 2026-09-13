@@ -2,7 +2,8 @@
 DatasetType: Intermediate
 DatasetName: Energy from Biowaste
 DatasetCode: IEA_BIOWAS
-Description: Percentage of total final energy consumption generated from Biowaste(?)
+Description: Total energy supply from biofuels and waste (IEA product COMRENEW),
+  in terajoules
 Unit: TJ
 Source:
   OrganizationCode: IEA

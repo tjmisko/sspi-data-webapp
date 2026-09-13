@@ -2,7 +2,7 @@
 DatasetType: Intermediate
 DatasetName: Energy from Nuclear
 DatasetCode: IEA_NCLEAR
-Description: Percentage of total final energy consumption generated from Nuclear
+Description: Total energy supply from nuclear (IEA product NUCLEAR), in terajoules
 Unit: TJ
 Source:
   OrganizationCode: IEA
