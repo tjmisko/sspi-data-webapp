@@ -216,6 +216,49 @@ def validate_country_codes(codes):
             validated.append(normalized)
     return validated
 
+def join_names_in_prose(names):
+    """
+    Join names as an English list: "A", "A and B", "A, B, and C".
+    """
+    if not names:
+        return ""
+    if len(names) == 1:
+        return names[0]
+    if len(names) == 2:
+        return f"{names[0]} and {names[1]}"
+    return ", ".join(names[:-1]) + f", and {names[-1]}"
+
+
+def build_default_configuration_card(item_details):
+    """
+    Build the "Default SSPI" card on the customize load page from the live
+    metadata tree, so its counts cannot drift from the structure the builder
+    actually loads.
+    """
+    counts = compute_metadata_counts(item_details or [])
+    pillar_names = [
+        item.get("ItemName") or item.get("ItemCode")
+        for item in item_details or []
+        if isinstance(item, dict) and item.get("ItemType") == "Pillar"
+    ]
+    pillar_names = [name for name in pillar_names if name]
+    description = f"Default SSPI structure with all {counts['indicator_count']} indicators"
+    if pillar_names:
+        description += f" across {join_names_in_prose(pillar_names)}"
+    description += "."
+    return {
+        'id': 'default',
+        'name': 'Default SSPI',
+        'description': description,
+        'pillars': counts['pillar_count'],
+        'categories': counts['category_count'],
+        'indicators': counts['indicator_count'],
+        'datasets': counts['dataset_count'],
+        'recommended': True,
+        'has_scores': True  # Default SSPI always has scores
+    }
+
+
 ###########################
 # SSPI DYNAMIC DATA PAGES #
 ###########################
@@ -398,19 +441,8 @@ def customize_load():
     is_authenticated = current_user.is_authenticated
     saved_configurations = []
 
-    # Define prebuilt configurations
     prebuilt_configurations = [
-        {
-            'id': 'default',
-            'name': 'Default SSPI',
-            'description': 'Default SSPI structure with all 54 indicators across Sustainability, Market Structure, and Public Goods.',
-            'pillars': 3,
-            'categories': 18,
-            'indicators': 54,
-            'datasets': 72,
-            'recommended': True,
-            'has_scores': True  # Default SSPI always has scores
-        }
+        build_default_configuration_card(sspi_metadata.item_details())
     ]
 
     if is_authenticated:
