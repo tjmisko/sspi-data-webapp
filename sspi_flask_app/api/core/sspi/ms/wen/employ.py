@@ -35,6 +35,7 @@ def compute_employ():
     return parse_json(scored_list)
 
 @impute_bp.route("/EMPLOY", methods=['POST'])
+@admin_required
 def impute_employ():
     app.logger.info("Running /api/v1/compute/EMPLOY")
     sspi_imputed_data.delete_many({"IndicatorCode": "EMPLOY"})

@@ -30,6 +30,7 @@ def compute_colbar():
 
 
 @impute_bp.route("/COLBAR", methods=['POST'])
+@admin_required
 def impute_colbar():
     app.logger.info("Running /api/v1/compute/COLBAR")
     sspi_imputed_data.delete_many({"IndicatorCode": "COLBAR"})

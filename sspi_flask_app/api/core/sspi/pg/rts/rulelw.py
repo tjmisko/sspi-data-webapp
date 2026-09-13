@@ -33,6 +33,7 @@ def compute_rulelw():
 
 
 @impute_bp.route("/RULELW", methods=['POST'])
+@admin_required
 def impute_rulelw():
     sspi_imputed_data.delete_many({"IndicatorCode": "RULELW"})
     rulelw_clean = sspi_clean_api_data.find({"DatasetCode": "VDEM_RULELW"})

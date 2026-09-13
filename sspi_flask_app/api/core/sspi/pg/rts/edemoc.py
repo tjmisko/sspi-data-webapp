@@ -41,6 +41,7 @@ def compute_edemoc():
 
 
 @impute_bp.route("/EDEMOC", methods=['POST'])
+@admin_required
 def impute_edemoc():
     sspi_imputed_data.delete_many({"IndicatorCode": "EDEMOC"})
     edemoc_clean = sspi_clean_api_data.find({"DatasetCode": "VDEM_EDEMOC"})

@@ -36,6 +36,7 @@ def compute_unempb():
 
 
 @impute_bp.route("/UNEMPB", methods=['POST'])
+@admin_required
 def impute_unempb():
     app.logger.info("Running /api/v1/compute/UNEMPB")
     sspi_imputed_data.delete_many({"IndicatorCode": "UNEMPB"})
