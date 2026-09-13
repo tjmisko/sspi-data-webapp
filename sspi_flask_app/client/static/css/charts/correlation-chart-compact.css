@@ -265,3 +265,23 @@
 .dark-theme .stat-row {
     border-bottom-color: var(--subtle-line-color);
 }
+
+/* Empty state: explains in place why no points are drawn */
+.panel-chart-root-container .correlation-empty-state {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 1.5rem;
+    text-align: center;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    color: var(--medium-importance-font-color);
+    pointer-events: none;
+}
+
+.panel-chart-root-container .correlation-empty-state[hidden] {
+    display: none;
+}
