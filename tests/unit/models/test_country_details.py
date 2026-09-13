@@ -51,6 +51,21 @@ def test_should_list_every_sspi49_country_when_directory_renders(country_groups,
     assert len(sspi49_codes) == 49
 
 
+def test_should_list_all_38_oecd_members_when_group_is_loaded(country_groups):
+    # 38 members since Costa Rica acceded on 2021-05-25 (Colombia 2020-04-28).
+    oecd_codes = country_groups["OECD"]
+    assert len(oecd_codes) == 38
+    assert len(set(oecd_codes)) == 38
+    assert {"COL", "CRI"} <= set(oecd_codes)
+
+
+def test_should_tag_colombia_and_costa_rica_as_oecd_when_details_are_built(country_details):
+    by_code = details_by_code(country_details)
+    assert "OECD" in by_code["COL"]["CountryGroups"]
+    assert "OECD" in by_code["CRI"]["CountryGroups"]
+    assert "SSPI67" not in by_code["CRI"]["CountryGroups"]
+
+
 def test_should_skip_codes_unknown_to_pycountry_instead_of_emitting_blank_details():
     details = SSPIMetadata.build_country_details(None, {"Fake": ["TUR", "ZZZ", ""]})
     assert [detail["Metadata"]["CountryCode"] for detail in details] == ["TUR"]
