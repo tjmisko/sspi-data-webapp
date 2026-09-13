@@ -4,7 +4,7 @@ import re
 from datetime import datetime
 
 import pycountry
-from flask import Blueprint, redirect, render_template, request, url_for
+from flask import Blueprint, abort, redirect, render_template, request, url_for
 from flask import current_app as app
 from flask_login import current_user, login_required
 from flask_wtf.csrf import generate_csrf
@@ -537,6 +537,8 @@ def custom_visualization(config_id):
 def country_data(country_code):
     country_code = country_code.upper()
     cdetail = sspi_metadata.get_country_detail(country_code)
+    if not cdetail:
+        abort(404, description=f"No country found for code {country_code}.")
     characteristics = get_country_characteristics(country_code)
 
     # Get SSPI67 country list for dropdown

@@ -1,3 +1,4 @@
+import pytest
 from pathlib import Path
 
 from flask import url_for
@@ -67,3 +68,30 @@ def test_should_not_use_the_old_index_name_when_scanning_client_sources():
         and "Social Policy and Progress Index" in path.read_text(encoding="utf-8")
     ]
     assert offending_files == []
+
+
+def test_should_return_404_when_country_code_is_unknown(client):
+    response = client.get("/data/country/ZZZ")
+    assert response.status_code == 404
+    assert b"ZZZ" in response.data
+    assert b"<h1>404</h1>" in response.data
+
+
+def test_should_return_404_when_country_code_is_not_three_letters(client):
+    response = client.get("/data/country/not-a-country")
+    assert response.status_code == 404
+
+
+def test_should_return_404_when_country_detail_has_no_metadata(client, monkeypatch):
+    from sspi_flask_app.models.database import sspi_metadata
+    monkeypatch.setattr(sspi_metadata, "get_country_detail", lambda code: {})
+    response = client.get("/data/country/USA")
+    assert response.status_code == 404
+
+
+def test_should_render_country_page_when_country_code_is_known_in_any_case(client):
+    from sspi_flask_app.models.database import sspi_metadata
+    if not sspi_metadata.get_country_detail("USA"):
+        pytest.skip("local metadata has no CountryDetail for USA")
+    response = client.get("/data/country/usa")
+    assert response.status_code == 200
