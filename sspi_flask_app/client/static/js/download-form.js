@@ -208,10 +208,12 @@ class DownloadForm {
                 }
             });
         } else {
-            const countryGroup = formData.get('CountryGroup');
-            if (countryGroup) {
-                params.append('CountryGroup', countryGroup);
-            }
+            const countryGroups = formData.getAll('CountryGroup');
+            countryGroups.forEach(countryGroup => {
+                if (countryGroup) {
+                    params.append('CountryGroup', countryGroup);
+                }
+            });
         }
         
         // Add years
