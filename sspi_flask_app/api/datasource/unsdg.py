@@ -5,41 +5,141 @@ from sspi_flask_app.api.resources.utilities import (
     string_to_float,
 )
 import json
+import logging
 import time
 import requests
 import math
 
 
-# Implement API Collection for
-# https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator=14.5.1
+log = logging.getLogger(__name__)
+
+SDG_PIVOT_URL_SOURCE = "https://unstats.un.org/SDGAPI/v1/sdg/Indicator/PivotData?"
+SDG_PIVOT_PAGE_SIZE = 500
+SDG_PIVOT_REQUEST_TIMEOUT_SECONDS = 120
+SDG_PIVOT_PAGE_MAX_ATTEMPTS = 3
+SDG_PIVOT_RETRY_DELAY_SECONDS = 5
+SDG_PIVOT_PAGE_DELAY_SECONDS = 1
+
+
+class SDGCollectionError(RuntimeError):
+    """Raised when a paged SDG pull cannot be proven complete."""
+
+
+def fail_sdg_collection(message: str):
+    log.error(message)
+    raise SDGCollectionError(message)
+
+
+def read_sdg_pivot_count(page: dict, field: str, url: str) -> int:
+    value = page.get(field)
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        fail_sdg_collection(f"SDG response from {url} has invalid {field}: {value!r}")
+    return value
+
+
+def fetch_sdg_pivot_page(url: str) -> dict:
+    """
+    GETs one PivotData page and checks its shape. Transport errors, HTTP
+    errors and undecodable bodies are retried; a body that decodes but lacks
+    the paging fields fails at once.
+    """
+    last_error = None
+    for attempt in range(1, SDG_PIVOT_PAGE_MAX_ATTEMPTS + 1):
+        try:
+            response = requests.get(url, timeout=SDG_PIVOT_REQUEST_TIMEOUT_SECONDS)
+            response.raise_for_status()
+            page = response.json()
+        except (requests.RequestException, ValueError) as error:
+            last_error = error
+            log.warning(
+                "SDG request %s failed (attempt %s of %s): %s",
+                url, attempt, SDG_PIVOT_PAGE_MAX_ATTEMPTS, error
+            )
+            if attempt < SDG_PIVOT_PAGE_MAX_ATTEMPTS:
+                time.sleep(SDG_PIVOT_RETRY_DELAY_SECONDS)
+            continue
+        if not isinstance(page, dict) or not isinstance(page.get("data"), list):
+            fail_sdg_collection(f"SDG response from {url} has no data list")
+        read_sdg_pivot_count(page, "totalElements", url)
+        read_sdg_pivot_count(page, "totalPages", url)
+        return page
+    fail_sdg_collection(
+        f"SDG request {url} failed after {SDG_PIVOT_PAGE_MAX_ATTEMPTS} attempts: {last_error}"
+    )
+
+
 def collect_sdg_indicator_data(sdg_indicator_code: str, **kwargs):
-    url_params = f"indicator={sdg_indicator_code}"
-    url_options = "&pageSize=500"
-    url_source = "https://unstats.un.org/SDGAPI/v1/sdg/Indicator/PivotData?"
-    sdg_series_url = url_source + url_params # This URL identifies RawDocumentSets for SDG
-    sdg_series_url_w_options = sdg_series_url + url_options
-    response = requests.get(sdg_series_url_w_options)
-    nPages = response.json().get('totalPages')
-    yield f"Iterating through {nPages} pages of source data for SDG {sdg_indicator_code}\n"
-    for p in range(1, nPages + 1):
-        new_url = f"{sdg_series_url_w_options}&page={p}"
-        yield "Fetching data for page {0} of {1}\n".format(p, nPages)
-        response = requests.get(new_url)
-        data_list = response.json().get('data')
+    """
+    Collects every page of the PivotData pull for one SDG indicator, e.g.
+    https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator=14.5.1
+
+    All pages are fetched and the record count is checked against the API's
+    totalElements before anything is written, so a failed or truncated pull
+    raises SDGCollectionError and never leaves a partial RawDocumentSet.
+    """
+    sdg_series_url = SDG_PIVOT_URL_SOURCE + f"indicator={sdg_indicator_code}"  # identifies RawDocumentSets for SDG
+    sdg_series_url_w_options = sdg_series_url + f"&pageSize={SDG_PIVOT_PAGE_SIZE}"
+    first_page_url = f"{sdg_series_url_w_options}&page=1"
+    first_page = fetch_sdg_pivot_page(first_page_url)
+    total_elements = first_page["totalElements"]
+    total_pages = first_page["totalPages"]
+    if total_elements == 0:
+        fail_sdg_collection(f"SDG {sdg_indicator_code} reports no records (totalElements=0)")
+    minimum_pages = math.ceil(total_elements / SDG_PIVOT_PAGE_SIZE)
+    if total_pages < minimum_pages:
+        fail_sdg_collection(
+            f"SDG {sdg_indicator_code} reports {total_pages} pages for "
+            f"{total_elements} records at pageSize {SDG_PIVOT_PAGE_SIZE}"
+        )
+    yield f"Iterating through {total_pages} pages of source data for SDG {sdg_indicator_code}\n"
+    fetched_pages = []
+    fetched_count = 0
+    for page_number in range(1, total_pages + 1):
+        page_url = f"{sdg_series_url_w_options}&page={page_number}"
+        yield "Fetching data for page {0} of {1}\n".format(page_number, total_pages)
+        if page_number == 1:
+            page = first_page
+        else:
+            time.sleep(SDG_PIVOT_PAGE_DELAY_SECONDS)
+            page = fetch_sdg_pivot_page(page_url)
+        if page["totalElements"] != total_elements:
+            fail_sdg_collection(
+                f"SDG {sdg_indicator_code} totalElements changed from {total_elements} "
+                f"to {page['totalElements']} on page {page_number}; source updated mid-pull"
+            )
+        reported_page_number = page.get("pageNumber")
+        if reported_page_number is not None and reported_page_number != page_number:
+            fail_sdg_collection(
+                f"SDG {sdg_indicator_code} returned pageNumber {reported_page_number} "
+                f"when page {page_number} was requested"
+            )
+        data_list = page["data"]
+        if not data_list and fetched_count < total_elements:
+            fail_sdg_collection(
+                f"SDG {sdg_indicator_code} page {page_number} of {total_pages} is empty "
+                f"with {fetched_count} of {total_elements} records fetched"
+            )
+        fetched_count += len(data_list)
+        fetched_pages.append((page_url, data_list))
+    if fetched_count != total_elements:
+        fail_sdg_collection(
+            f"SDG {sdg_indicator_code} fetched {fetched_count} records across "
+            f"{total_pages} pages but the API reports totalElements={total_elements}"
+        )
+    for page_url, data_list in fetched_pages:
         source_info = {
             "OrganizationName": "United Nations Sustainable Development Goals",
             "OrganizationCode": "UNSDG",
             "OrganizationSeriesCode": sdg_indicator_code,
             "QueryCode": sdg_indicator_code,
             "BaseURL": sdg_series_url,
-            "URL": new_url
+            "URL": page_url
         }
         count = sspi_raw_api_data.raw_insert_many(
             data_list, source_info, **kwargs
         )
         yield f"Inserted {count} new observations into SSPI Raw Data\n"
-        time.sleep(1)
-    yield f"Collection complete for SDG {sdg_indicator_code}\n"
+    yield f"Collection complete for SDG {sdg_indicator_code}: {fetched_count} of {total_elements} records\n"
 
 
 def extract_sdg(raw_sdg_pivot_data):
