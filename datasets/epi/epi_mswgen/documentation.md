@@ -2,7 +2,8 @@
 DatasetType: Intermediate
 DatasetName: Waste Generated Per Capita
 DatasetCode: EPI_MSWGEN
-Description: We measure the total municipal solid waste produced per person each year.
+Description: EPI indicator score (WPC) for total municipal solid waste generated per
+  person each year, scaled 0 to 100 where higher scores mean less waste per person.
 Unit: Index
 Source:
   OrganizationCode: EPI
