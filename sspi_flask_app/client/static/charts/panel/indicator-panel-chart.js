@@ -448,7 +448,7 @@ class IndicatorPanelChart extends PanelChart {
                 // Fallback to old logic for backwards compatibility
                 if (code === 'sspi') {
                     displayName = 'SSPI';
-                    itemName = 'Social Policy and Progress Index';
+                    itemName = 'Sustainable and Shared-Prosperity Policy Index';
                     url = '/data';
                 } else if (i === 1) {
                     displayName = code.toUpperCase();
