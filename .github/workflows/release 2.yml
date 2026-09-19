@@ -1,0 +1,121 @@
+name: Deploy Release
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        mongodb-version: [6.0]
+        python-version: [3.12]
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+
+      - name: Start MongoDB
+        uses: supercharge/mongodb-github-action@1.10.0
+        with:
+          mongodb-version: ${{ matrix.mongodb-version }}
+
+      - name: Install deps & test
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          echo 'SECRET_KEY="DUMMY_SECRET_KEY_FOR_TESTING_ONLY"' >| .env
+          echo 'SSPI_APIKEY="placeholder"' >> .env
+          echo 'SSPI_APIKEY_LOCAL="placeholder"' >> .env
+          pytest -q
+
+      - name: Build runtime tarball
+        run: |
+          VER="${GITHUB_REF_NAME}"
+          mkdir -p dist
+          TAR="sspi-${VER}.tar.gz"
+          tar -czf "dist/${TAR}" \
+            --exclude-vcs --exclude='__pycache__' --exclude='*.pyc' \
+            --exclude='env' --exclude='logs' --exclude='tests' \
+            --exclude='documentation' --exclude='*.egg-info' \
+            --exclude='.env' \
+            ./ local ./sspi_flask_app ./connector ./cli ./datasets \
+            ./scripts ./config.py ./requirements.txt ./pyproject.toml
+          (cd dist && sha256sum "${TAR}" > "sspi-${VER}.sha256")
+
+      - name: Publish GitHub Release assets
+        uses: softprops/action-gh-release@v2
+
+        with:
+          files: |
+            dist/sspi-${{ github.ref_name }}.tar.gz
+            dist/sspi-${{ github.ref_name }}.sha256
+
+  deploy:
+    needs: build-release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download release tarball
+        uses: robinraju/release-downloader@v1.10
+        with:
+          repository: ${{ github.repository }}
+          tag: ${{ github.ref_name }}
+          fileName: sspi-${{ github.ref_name }}.tar.gz
+          out-file-path: dist
+
+      - name: Download release sha256
+        uses: robinraju/release-downloader@v1.10
+        with:
+          repository: ${{ github.repository }}
+          tag: ${{ github.ref_name }}
+          fileName: sspi-${{ github.ref_name }}.sha256
+          out-file-path: dist
+
+      - name: Start ssh-agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: "${{ secrets.SSH_PRIVATE_KEY }}"
+
+      - name: Deploy over SSH
+        env:
+          DEPLOY_VER: ${{ github.ref_name }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_BASE: ${{ secrets.DEPLOY_PATH }}
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+        run: |
+          set -euo pipefail
+          ssh -o StrictHostKeyChecking=accept-new "$DEPLOY_USER@$DEPLOY_HOST" "mkdir -p '$DEPLOY_BASE/releases/$DEPLOY_VER'"
+          scp dist/sspi-"$DEPLOY_VER".tar.gz dist/sspi-"$DEPLOY_VER".sha256 "$DEPLOY_USER@$DEPLOY_HOST":"$DEPLOY_BASE/releases/$DEPLOY_VER/"
+
+          ssh "$DEPLOY_USER@$DEPLOY_HOST" \
+          "DEPLOY_BASE='${DEPLOY_BASE}' DEPLOY_VER='${DEPLOY_VER}' bash -s" <<'EOF'
+          set -euo pipefail
+          DEPLOY_BASE="${DEPLOY_BASE:-/srv/sspi}"
+          VER="${DEPLOY_VER}"
+          DIR="$DEPLOY_BASE/releases/$VER"
+          cd "$DIR"
+          sha256sum -c "sspi-$VER.sha256"
+          tar -xzf "sspi-$VER.tar.gz"
+          python3 -m venv env
+          ./env/bin/pip install --no-cache-dir --upgrade pip wheel
+          ./env/bin/pip install --no-cache-dir -r requirements.txt
+          ./env/bin/pip install --no-cache-dir -e .
+          cat > sspi.world.wsgi << 'PYWSGI'
+          from sspi_flask_app import init_app
+          from config import ProdConfig
+
+          application = init_app(ProdConfig)
+          PYWSGI
+
+          ln -sfn "$DEPLOY_BASE/shared" ./.shared
+          ln -sfn "$DIR" "$DEPLOY_BASE/current"
+          ln -sfn "$DEPLOY_BASE/secrets/.env" ./.env
+          sudo /usr/sbin/apachectl graceful
+          EOF
+        shell: bash
