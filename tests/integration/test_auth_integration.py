@@ -344,6 +344,88 @@ class TestAuthenticationRouteIntegration:
             assert response.status_code == 401
 
 
+def bearer(user_fixture):
+    return {'Authorization': f'Bearer {user_fixture["user"].apikey}'}
+
+
+class TestRoleBoundaries:
+    """User-level accounts must never reach admin-only auth routes or admin writes."""
+
+    def test_auth_query_should_return_401_when_anonymous(self, app, client, mock_auth_data):
+        response = client.get('/auth/query')
+        assert response.status_code == 401
+
+    def test_auth_query_should_return_403_when_caller_is_user_role(self, app, client, test_user, mock_auth_data):
+        response = client.get('/auth/query', headers=bearer(test_user))
+        assert response.status_code == 403
+
+    def test_auth_query_should_list_users_without_api_keys_when_caller_is_admin(self, app, client, admin_user, test_user, mock_auth_data):
+        response = client.get('/auth/query', headers=bearer(admin_user))
+        assert response.status_code == 200
+        listing = response.get_json()
+        assert {entry['username'] for entry in listing} == {'adminuser', 'testuser'}
+        for entry in listing:
+            assert set(entry) == {'username', 'id'}
+        assert test_user['user'].apikey not in response.get_data(as_text=True)
+        assert admin_user['user'].apikey not in response.get_data(as_text=True)
+
+    def test_register_should_create_user_role_only_when_form_posts_admin_role(self, app, client, mock_auth_data):
+        response = client.post('/register', data={
+            'username': 'new_public_user',
+            'email': 'new_public_user@example.com',
+            'password': 'Str0ng!Pass',
+            'confirm_password': 'Str0ng!Pass',
+            'roles': 'admin',
+            'role': 'admin',
+            'is_admin': 'true',
+        })
+        assert response.status_code == 302
+        created = User.find_by_username('new_public_user')
+        assert created is not None
+        assert created.roles == ['user']
+        assert created.is_admin() is False
+
+    def test_register_should_not_create_user_when_passwords_differ(self, app, client, mock_auth_data):
+        response = client.post('/register', data={
+            'username': 'mismatch_user',
+            'email': 'mismatch_user@example.com',
+            'password': 'Str0ng!Pass',
+            'confirm_password': 'Str0ng!Pass2',
+        })
+        assert response.status_code == 200
+        assert User.find_by_username('mismatch_user') is None
+
+    def test_register_admin_should_return_401_when_anonymous(self, app, client, mock_auth_data):
+        assert client.get('/auth/register-admin').status_code == 401
+        assert client.post('/auth/register-admin').status_code == 401
+
+    def test_register_admin_should_return_403_and_create_nothing_when_caller_is_user_role(self, app, client, test_user, mock_auth_data):
+        response = client.post('/auth/register-admin', headers=bearer(test_user), data={
+            'username': 'escalated_user',
+            'email': 'escalated_user@example.com',
+            'password': 'Str0ng!Pass',
+            'confirm_password': 'Str0ng!Pass',
+        })
+        assert response.status_code == 403
+        assert User.find_by_username('escalated_user') is None
+
+    def test_register_admin_should_create_account_when_caller_is_admin(self, app, client, admin_user, mock_auth_data):
+        response = client.post('/auth/register-admin', headers=bearer(admin_user), data={
+            'username': 'admin_made_user',
+            'email': 'admin_made_user@example.com',
+            'password': 'Str0ng!Pass',
+            'confirm_password': 'Str0ng!Pass',
+        })
+        assert response.status_code == 302
+        assert User.find_by_username('admin_made_user') is not None
+
+    @pytest.mark.parametrize('route', ['/api/v1/impute/RULELW', '/api/v1/impute/EDEMOC', '/api/v1/impute/MURDER',
+                                       '/api/v1/impute/COLBAR', '/api/v1/impute/EMPLOY', '/api/v1/impute/UNEMPB'])
+    def test_impute_route_should_return_403_when_caller_is_user_role(self, app, client, test_user, mock_auth_data, route):
+        response = client.post(route, headers=bearer(test_user))
+        assert response.status_code == 403
+
+
 class TestMongoDBBackendConsistency:
     """Test MongoDB backend consistency and reliability."""
     

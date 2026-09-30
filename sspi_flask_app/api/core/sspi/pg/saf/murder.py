@@ -36,6 +36,7 @@ def compute_murder():
 
 
 @impute_bp.route("/MURDER", methods=['POST'])
+@admin_required
 def impute_murder():
     sspi_imputed_data.delete_many({"IndicatorCode": "MURDER"})
     murder_clean = sspi_clean_api_data.find({"DatasetCode": "WB_MURDER"})
