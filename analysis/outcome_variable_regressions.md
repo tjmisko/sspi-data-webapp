@@ -2,6 +2,8 @@
 AnalysisCode: OUTCOME_VARIABLE_REGRESSIONS
 AnalysisTitle: Outcome Variable Regressions
 Authors:
+  - Ruotong Xu
+  - Tristan Misko
   - Clair Brown
 Date: 2025-11-25
 ---
