@@ -22,7 +22,7 @@
     ('imputation', 'Imputation'),
     ('aggregation', 'Aggregation'),
     ('limitations', 'Limitations'),
-    ('reproducibility', 'Reproducibility'),
+    ('data-and-code', 'Data and Code'),
 ] %}
 
 {% macro toc_list() %}
@@ -881,38 +881,9 @@ We recognize that equal-weight
                         </li>
                     </ul>
 
-                    {{ section_head('reproducibility') }}
+                    {{ section_head('data-and-code') }}
                     <p>
-                        Early versions of the SSPI were built in spreadsheets. Data were
-                        copied by hand from source websites into worksheets, indicators
-                        were computed in separate workbooks, and results were copied by
-                        hand into a main file. The only check on the procedure was to
-                        repeat it by hand and compare the results.
-                    </p>
-                    <p>
-                        Two classes of error recurred. Rankings were often produced by
-                        sorting a selected range, and a selection that was slightly
-                        wrong scrambled countries against their values. The scoring
-                        scheme was distributed across dozens of sheets, so determining
-                        which indicators entered a category required auditing every
-                        formula in every row. Both classes of error were hard to detect
-                        and costly to correct.
-                    </p>
-                    <p>
-                        Rewriting the index as code addressed the underlying problem,
-                        because code makes each procedure explicit. Sources and
-                        transformations are named once and run repeatedly, and a mistake
-                        is a mistake in a written procedure that can be found and
-                        corrected. The 2018 index was frozen only after it had been
-                        reproduced in code, and the reproduction caught several
-                        substantive errors in earlier versions.
-                    </p>
-                    <p>
-                        Data now move through the system in stages: collected from the
-                        source API, cleaned into a standard form, imputed where
-                        necessary, scored against goalposts, and finalized into item
-                        scores. Every stage is stored, so any number on this site can be
-                        traced back to the response returned by the source organization.
+                        The data and code behind the index are public.
                     </p>
                     <ul class="methodology-list">
                         <li>
