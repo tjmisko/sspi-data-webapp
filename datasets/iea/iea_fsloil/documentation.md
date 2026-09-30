@@ -2,7 +2,7 @@
 DatasetType: Intermediate
 DatasetName: Energy from Fossil Oil
 DatasetCode: IEA_FSLOIL
-Description: Percentage of total final energy consumption generated from Fossil Oil
+Description: Total energy supply from oil (IEA product MTOTOIL), in terajoules
 Unit: TJ
 Source:
   OrganizationCode: IEA

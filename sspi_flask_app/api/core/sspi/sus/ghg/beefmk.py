@@ -34,31 +34,48 @@ from sspi_flask_app.api.resources.utilities import (
 #     )
 
 
+# UNFAO_BFPROD is total production in 1000 t; UNFAO_BFCONS is already kg/capita/year.
+BEEFMK_KG_PER_THOUSAND_TONNES = 1e6
+BEEFMK_PRODUCTION_LOWER_GOALPOST = 50
+BEEFMK_PRODUCTION_UPPER_GOALPOST = 0
+BEEFMK_CONSUMPTION_LOWER_GOALPOST = 50
+BEEFMK_CONSUMPTION_UPPER_GOALPOST = 0
+
+
+def beef_production_kg_per_capita(UNFAO_BFPROD, WB_POPULN):
+    return UNFAO_BFPROD * BEEFMK_KG_PER_THOUSAND_TONNES / WB_POPULN
+
+
+def score_beefmk(UNFAO_BFPROD, UNFAO_BFCONS, WB_POPULN):
+    score_production = goalpost(
+        beef_production_kg_per_capita(UNFAO_BFPROD, WB_POPULN),
+        BEEFMK_PRODUCTION_LOWER_GOALPOST,
+        BEEFMK_PRODUCTION_UPPER_GOALPOST,
+    )
+    score_consumption = goalpost(
+        UNFAO_BFCONS,
+        BEEFMK_CONSUMPTION_LOWER_GOALPOST,
+        BEEFMK_CONSUMPTION_UPPER_GOALPOST,
+    )
+    return (score_production + score_consumption) / 2
+
+
 @compute_bp.route("/BEEFMK", methods=["POST"])
 @admin_required
 def compute_beefmk():
     app.logger.info("Running /api/v1/compute/BEEFMK")
     sspi_indicator_data.delete_many({"IndicatorCode": "BEEFMK"})
     sspi_incomplete_indicator_data.delete_many({"IndicatorCode": "BEEFMK"})
-    
+
     # Fetch clean datasets
     bfprod_clean = sspi_clean_api_data.find({"DatasetCode": "UNFAO_BFPROD"})
     bfcons_clean = sspi_clean_api_data.find({"DatasetCode": "UNFAO_BFCONS"})
     combined_list = bfprod_clean + bfcons_clean
-    
-    prod_lg, prod_ug = 50, 0
-    cons_lg, cons_ug = 50, 0
     populn_clean = sspi_clean_api_data.find({"DatasetCode": "WB_POPULN"})
-    
+
     # Add population data to combined list
     combined_list.extend(populn_clean)
-    
-    def score_beefmk(UNFAO_BFPROD, UNFAO_BFCONS, WB_POPULN):
-        prod_per_cap = UNFAO_BFPROD / WB_POPULN
-        score_prod = goalpost(prod_per_cap, prod_lg, prod_ug)
-        score_cons = goalpost(UNFAO_BFCONS, cons_lg, cons_ug)
-        return (score_prod + score_cons) / 2
-    
+
     clean_list, incomplete_list = score_indicator(
         combined_list, "BEEFMK", 
         score_function=score_beefmk, 
