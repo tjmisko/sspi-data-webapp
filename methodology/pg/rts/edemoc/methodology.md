@@ -11,6 +11,11 @@ Description: >
 Footnote: >
   To view the Electoral Democracy Index data, download the V-Dem data set
   and view the column "v2x_polyarchy".
+  Years after a country's last V-Dem observation, up to 2023, are
+  carried forward from that observation and stored as imputed rows
+  (ImputationMethod "Forward Extrapolation", ImputationDistance = years
+  since the last observation, no distance cap); observed V-Dem years are
+  never overwritten.
 Indicator: Electoral Democracy Index
 IndicatorCode: EDEMOC
 LowerGoalpost: 0
