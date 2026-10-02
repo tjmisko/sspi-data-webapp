@@ -128,6 +128,21 @@ def test_should_stamp_originator_org_when_organization_override_given(monkeypatc
 @pytest.mark.parametrize(
     "org_folder, dataset_folder, indicator_code, collect_kwargs",
     [
+        (
+            "wgi", "wgi_pubsrv", "GOV_WGI_GE.EST",
+            {
+                "source": 3,
+                "organization_code": "WGI",
+                "organization_name": "World Bank - Worldwide Governance Indicators",
+            },
+        ),
+        (
+            "ipu", "ipu_wmplmt", "SG.GEN.PARL.ZS",
+            {
+                "organization_code": "IPU",
+                "organization_name": "Inter-Parliamentary Union",
+            },
+        ),
         ("wb", "wb_taxrev", "GC.TAX.TOTL.GD.ZS", {}),
     ],
 )
@@ -148,3 +163,11 @@ def test_should_stamp_source_info_matching_doc_source_when_collected(
         assert stamped[key] == value, (
             f"doc Source.{key}={value!r} but collector stamps {stamped[key]!r}"
         )
+
+
+def test_should_reject_stale_doc_source_shape_when_doc_has_bad_keys():
+    """Guard against regressing to the old docs that carried null QueryCode
+    and a BaseURL that no raw document would ever match."""
+    for org_folder, dataset_folder in (("wgi", "wgi_pubsrv"), ("ipu", "ipu_wmplmt")):
+        doc_source = _load_doc_source(org_folder, dataset_folder)
+        assert set(doc_source.keys()) == {"OrganizationCode", "QueryCode"}

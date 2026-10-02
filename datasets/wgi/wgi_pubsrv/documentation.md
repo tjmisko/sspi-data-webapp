@@ -2,16 +2,18 @@
 DatasetType: Indicator
 DatasetCode: WGI_PUBSRV
 DatasetName: Quality of Public Services & Governance
-Description: Perceptions of the quality of public services, quality of the civil service
-  and its independence from political pressures, quality of policies and implementation,
-  and credibility of the government's commitment to policies. Measured from -2.5 to
-  2.5.
-  data set and view the 2018 "Estimate" data in "Government Effectiveness".
+Description: >
+  Worldwide Governance Indicators "Government Effectiveness" estimate.
+  Captures perceptions of the quality of public services, the quality of the
+  civil service and the degree of its independence from political pressures,
+  the quality of policy formulation and implementation, and the credibility of
+  the government's commitment to such policies. Distributed through the World
+  Bank API (source database 3, indicator GOV_WGI_GE.EST).
+Unit: >
+  Governance estimate (approx. -2.5 to +2.5)
 Source:
-  OrganizationName: World Bank (WGI)
   OrganizationCode: WGI
-  OrganizationSeriesCode: null
-  QueryCode: null
-  BaseURL: https://info.worldbank.org/governance/wgi/
+  QueryCode: GOV_WGI_GE.EST
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/wgi/wgi_pubsrv.py
 ---
 
