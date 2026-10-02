@@ -449,14 +449,22 @@ def country_code_to_name(CountryCode):
 
 def get_country_code(country_name):
     """
-    Handles edge cases of country fuzzy matching
+    Handles edge cases of country fuzzy matching.
+
+    Returns the ISO alpha-3 code when the name matches a hard-coded edge case
+    or a pycountry lookup succeeds. On lookup failure it returns the input
+    name unchanged (not None, no exception); callers in sipri.py,
+    prisonstudies.py and fsi.py rely on this contract to detect unmapped names.
+
+    Any name containing "korea" together with "north" or "democratic" resolves
+    to PRK; every other name containing "korea" resolves to KOR.
     """
     if "kosovo" in str.lower(country_name):
         return "XKX"
-    if "korea" in str.lower(country_name) and ("democratic" not in str.lower(country_name) or "south" in str.lower(country_name)):
+    if "korea" in str.lower(country_name):
+        if "north" in str.lower(country_name) or "democratic" in str.lower(country_name):
+            return "PRK"
         return "KOR"
-    if "korea" in str.lower(country_name) and ("democratic" in str.lower(country_name) or "north" in str.lower(country_name)):
-        return "PRK"
     if "niger" in str.lower(country_name) and "nigeria" not in str.lower(country_name):
         return "NER"
     if "democratic republic" in str.lower(country_name) or "dr" in str.lower(country_name) and "congo" in str.lower(country_name):
