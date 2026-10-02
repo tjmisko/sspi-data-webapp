@@ -59,6 +59,27 @@ dashboard_bp = Blueprint(
 )
 
 
+def chart_y_min(dataset_detail: dict) -> float | None:
+    """
+    Lower y-axis bound for a dataset chart (decision D-29).
+
+    Metadata.Range records the true observed range. Charts anchor at zero
+    for data whose zero is meaningful (counts, rates, percentages, bounded
+    scores), so the bound is min(0, yMin): all-positive data starts at 0 and
+    data that goes negative keeps its true minimum. A dataset whose zero is
+    not meaningful opts out with ``ChartZeroBaseline: false`` in its
+    documentation front matter and charts from its true minimum.
+
+    Returns None when no range has been recorded.
+    """
+    y_min = (dataset_detail.get("Range") or {}).get("yMin")
+    if y_min is None:
+        return None
+    if dataset_detail.get("ChartZeroBaseline", True) is False:
+        return y_min
+    return min(0, y_min)
+
+
 @dashboard_bp.route("/status/database/<database>")
 @admin_required
 def get_database_status(database):
@@ -181,6 +202,7 @@ def get_dynamic_indicator_line_data(indicator_code):
     for dscode in available_datasets:
         detail = sspi_metadata.get_dataset_detail(dscode)
         ds_range = detail.get("Range", {})
+        y_min = chart_y_min(detail)
         # Always include datasetName, use datasetCode as fallback
         dataset_options.append(
             {
@@ -188,7 +210,7 @@ def get_dynamic_indicator_line_data(indicator_code):
                 "datasetCode": dscode,
                 "datasetDescription": detail.get("Description", ""),
                 "unit": detail.get("Unit", ""),
-                "yMin": ds_range.get("yMin", 0) if ds_range else 0,
+                "yMin": 0 if y_min is None else y_min,
                 "yMax": ds_range.get("yMax", 1) if ds_range else 1,
             }
         )
@@ -351,7 +373,7 @@ def get_dataset_panel_data(dataset_code):
         "countryGroupMap": country_group_map,
         "datasetName": dataset_detail["DatasetName"],
         "datasetOptions": dataset_options,
-        "yMin": dataset_detail.get("Range", {}).get("yMin"),
+        "yMin": chart_y_min(dataset_detail),
         "yMax": dataset_detail.get("Range", {}).get("yMax")
     })
 
