@@ -1064,23 +1064,34 @@ class SSPIMetadata(MongoWrapper):
 
     def record_dataset_range(self, clean_dataset: list[dict], dataset_code: str):
         """
-        Records the range of values for a dataset in the metadata collection.
-        This is used to track the temporal coverage of datasets.
+        Records the observed range of ``Value`` for a dataset on its
+        DatasetDetail document as ``Metadata.Range.yMin`` and
+        ``Metadata.Range.yMax``. The range is the true minimum and maximum of
+        the cleaned values; it is not anchored at zero and says nothing about
+        temporal coverage.
+
+        When ``clean_dataset`` is empty there is no observed range, so nothing
+        is written and any previously stored range is left untouched.
 
         :param clean_dataset: The cleaned dataset to record the range for.
         :param dataset_code: The code of the dataset to record the range for.
         """
-        min_val, max_val = 0, 0
+        observed_values = []
         for d in clean_dataset:
             new_val = d.get("Value")
             assert isinstance(new_val, (int, float)), (
                 f"Value for dataset {dataset_code} must be an int or float, "
                 f"but found {type(new_val)}: {new_val}"
             )
-            if new_val > max_val:
-                max_val = new_val
-            elif new_val < min_val:
-                min_val = new_val
+            observed_values.append(new_val)
+        if not observed_values:
+            log.warning(
+                "record_dataset_range %s: no clean observations, range not recorded",
+                dataset_code,
+            )
+            return
+        min_val = min(observed_values)
+        max_val = max(observed_values)
         query = {
             "DocumentType": "DatasetDetail",
             "Metadata.DatasetCode": dataset_code
