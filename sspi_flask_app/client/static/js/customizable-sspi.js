@@ -2230,6 +2230,19 @@ class CustomizableSSPIStructure {
     // ========== SECTION 4: API Methods - Indicators ==========
 
     /**
+     * Placeholder details for a dataset code that has no dataset metadata.
+     * @private
+     */
+    _unknownDatasetDetails(datasetCode) {
+        return {
+            DatasetCode: datasetCode,
+            DatasetName: 'No metadata available',
+            Description: 'No metadata available for this dataset.',
+            Unknown: true
+        };
+    }
+
+    /**
      * Private method: Add dataset to an indicator element (may or may not be in DOM yet)
      * @private
      * @param {string} datasetCode - The dataset code to add
@@ -2252,10 +2265,10 @@ class CustomizableSSPIStructure {
         }
 
         // Lookup dataset details (always from this.datasetDetails)
-        const details = this.datasetDetails[datasetCode];
-        if (!details) {
-            return { success: false, error: `Dataset ${datasetCode} not found in datasetDetails` };
-        }
+        // A code with no dataset metadata is still part of the config: keep it
+        // as an unknown dataset so it is never silently dropped.
+        const details = this.datasetDetails[datasetCode] || this._unknownDatasetDetails(datasetCode);
+        const isUnknown = details.Unknown === true;
 
         // Create dataset item element
         const formatNumber = (num) => num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -2274,6 +2287,10 @@ class CustomizableSSPIStructure {
 
         const datasetItem = document.createElement('div');
         datasetItem.classList.add('dataset-item');
+        if (isUnknown) {
+            datasetItem.classList.add('dataset-item-unknown');
+            datasetItem.title = 'No dataset metadata is available for ' + datasetCode + '. It is kept in this indicator.';
+        }
         datasetItem.dataset.datasetCode = datasetCode;
         datasetItem.dataset.expanded = 'false';
         datasetItem.innerHTML = `
@@ -2542,10 +2559,7 @@ class CustomizableSSPIStructure {
             const selectedDatasetsDiv = indEl.querySelector('.selected-datasets');
             if (selectedDatasetsDiv) {
                 datasetCodes.forEach(datasetCode => {
-                    const details = this.datasetDetails[datasetCode];
-                    if (details) {
-                        this.addDataset(datasetCode, indicatorCode, {datasetDetails: details });
-                    }
+                    this.addDataset(datasetCode, indicatorCode);
                 });
             }
         }
@@ -2937,15 +2951,8 @@ class CustomizableSSPIStructure {
                 // Add new datasets
                 const newDatasetElements = [];
                 for (const datasetCode of datasetCodes) {
-                    const datasetDetails = this.datasetDetails[datasetCode];
-                    if (!datasetDetails) {
-                        console.warn(`Dataset ${datasetCode} not found in datasetDetails`);
-                        continue;
-                    }
-
                     // Use existing method to add dataset without recording individual actions
                     const result = this.addDataset(datasetCode, currentCode, {
-                        datasetDetails,
                         record: false // Don't record individual add actions
                     });
 
