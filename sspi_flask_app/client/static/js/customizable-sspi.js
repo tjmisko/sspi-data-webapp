@@ -1699,6 +1699,13 @@ class CustomizableSSPIStructure {
                 }
             }
         }, true);
+        // Clear a stale-dataset marker as soon as the formula stops referencing the code
+        this.container.addEventListener('input', e => {
+            const el = e.target;
+            if (!el.classList?.contains('editable-score-function') || !el.dataset.staleDatasetCodes) return;
+            const indicatorEl = el.closest('[data-indicator-code]');
+            if (indicatorEl) this._syncStaleDatasetMarker(el, indicatorEl);
+        });
         // Track contenteditable changes for undo/redo
         let editingElement = null;
         let originalValue = null;
@@ -2199,11 +2206,13 @@ class CustomizableSSPIStructure {
                                 selectedDatasetsDiv.insertBefore(datasetItem, items[position]);
                             }
                             this._setupDatasetHandlers(datasetItem, selectedDatasetsDiv, indicatorCode, true);
+                            this._syncStaleDatasetMarkerForIndicator(indicatorCode);
                             this.flagUnsaved();
                             this.validate();
                         },
                         redo: () => {
                             datasetItem.remove();
+                            this._flagStaleDatasetReference(indicatorCode, datasetCode, { notify: false });
                             this.flagUnsaved();
                             this.validate();
                         }
@@ -2211,6 +2220,7 @@ class CustomizableSSPIStructure {
                 }
 
                 datasetItem.remove();
+                this._flagStaleDatasetReference(indicatorCode, datasetCode);
                 this.flagUnsaved();
                 this.validate();
             });
@@ -2366,6 +2376,67 @@ class CustomizableSSPIStructure {
     }
 
     /**
+     * Record that a removed dataset code may still be referenced by an
+     * indicator's score function, and surface that to the user. Does not
+     * rewrite the formula.
+     * @private
+     */
+    _flagStaleDatasetReference(indicatorCode, datasetCode, { notify = true } = {}) {
+        const indicatorEl = this.findElementByCode(indicatorCode, 'Indicator');
+        const scoreFunctionEl = indicatorEl?.querySelector('.editable-score-function');
+        if (!scoreFunctionEl) return;
+        if (!this._scoreFunctionReferencesCode(scoreFunctionEl, datasetCode)) return;
+        const codes = new Set((scoreFunctionEl.dataset.staleDatasetCodes || '').split(',').filter(Boolean));
+        codes.add(datasetCode);
+        scoreFunctionEl.dataset.staleDatasetCodes = Array.from(codes).join(',');
+        this._syncStaleDatasetMarker(scoreFunctionEl, indicatorEl);
+        if (notify) {
+            notifications.warning(
+                `The score function for ${indicatorCode} still uses ${datasetCode}, which is no longer in its dataset list. Edit the score function.`,
+                8000
+            );
+        }
+    }
+
+    /** @private */
+    _scoreFunctionReferencesCode(scoreFunctionEl, code) {
+        const escaped = code.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        return new RegExp(`(^|[^A-Za-z0-9_])${escaped}([^A-Za-z0-9_]|$)`).test(scoreFunctionEl.textContent);
+    }
+
+    /**
+     * Re-evaluate the stale-dataset marker on a score function: a code stays
+     * flagged only while the formula references it and the indicator no longer
+     * lists it. Clears the marker once nothing is stale.
+     * @private
+     */
+    _syncStaleDatasetMarker(scoreFunctionEl, indicatorEl) {
+        const stored = (scoreFunctionEl.dataset.staleDatasetCodes || '').split(',').filter(Boolean);
+        if (stored.length === 0) return;
+        const stale = stored.filter(code =>
+            !indicatorEl.querySelector(`.selected-datasets [data-dataset-code="${code}"]`) &&
+            this._scoreFunctionReferencesCode(scoreFunctionEl, code));
+        if (stale.length === 0) {
+            delete scoreFunctionEl.dataset.staleDatasetCodes;
+            scoreFunctionEl.classList.remove('score-function-invalid');
+            scoreFunctionEl.style.outline = '';
+            scoreFunctionEl.removeAttribute('title');
+            return;
+        }
+        scoreFunctionEl.dataset.staleDatasetCodes = stale.join(',');
+        scoreFunctionEl.classList.add('score-function-invalid');
+        scoreFunctionEl.style.outline = '2px solid var(--color-error, #d33)';
+        scoreFunctionEl.title = `Score function references ${stale.join(', ')}, which ${stale.length > 1 ? 'are' : 'is'} no longer in this indicator's dataset list. Edit the formula or restore the dataset.`;
+    }
+
+    /** Re-sync the stale marker for an indicator (after undo/redo). @private */
+    _syncStaleDatasetMarkerForIndicator(indicatorCode) {
+        const indicatorEl = this.findElementByCode(indicatorCode, 'Indicator');
+        const scoreFunctionEl = indicatorEl?.querySelector('.editable-score-function');
+        if (scoreFunctionEl) this._syncStaleDatasetMarker(scoreFunctionEl, indicatorEl);
+    }
+
+    /**
      * Remove dataset from an indicator
      * @param {string} indicatorCode - The indicator code
      * @param {Object} options - Options object
@@ -2412,13 +2483,16 @@ class CustomizableSSPIStructure {
                 } else {
                     selectedDatasetsDiv.insertBefore(datasetItem, siblings[position]);
                 }
+                this._syncStaleDatasetMarkerForIndicator(indicatorCode);
                 this.validate();
             },
             redo: () => {
                 datasetItem.remove();
+                this._flagStaleDatasetReference(indicatorCode, datasetCode, { notify: false });
                 this.validate();
             }
         });
+        this._flagStaleDatasetReference(indicatorCode, datasetCode);
         this.flagUnsaved();
         this.validate();
         return { success: true, action: action };
