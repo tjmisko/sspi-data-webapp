@@ -1,8 +1,21 @@
+/* Flag glyphs only. Linux and Windows lack color flag emoji and draw the
+   regional-indicator letters instead. The unicode-range keeps this font from
+   touching any other character. Twemoji art, CC-BY 4.0: see
+   fonts/TwemojiCountryFlags-LICENSE.md. The url is relative to the bundled
+   style.css at the static root. */
+@font-face {
+  font-family: 'Twemoji Country Flags';
+  src: url('fonts/TwemojiCountryFlags.woff2') format('woff2');
+  unicode-range: U+1F1E6-1F1FF, U+1F3F4, U+E0062-E0063, U+E0065, U+E0067, U+E006C, U+E006E, U+E0073-E0074, U+E0077, U+E007F;
+  font-display: swap;
+}
+
 :root {
-  --title-font-family: 'REM', system-ui, sans-serif;
-  --body-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --flag-font-family: 'Twemoji Country Flags';
+  --title-font-family: var(--flag-font-family), 'REM', system-ui, sans-serif;
+  --body-font-family: var(--flag-font-family), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --header-font-family: var(--body-font-family);
-  --article-body-font-family: 'Libre Baskerville', Georgia, serif;
+  --article-body-font-family: var(--flag-font-family), 'Libre Baskerville', Georgia, serif;
   --code-font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
   /* Legacy aliases — keep call sites working, one source of truth above */
   --heading-font-family: var(--header-font-family);

@@ -371,7 +371,7 @@
 }
 
 .country-directory-card .flag-span {
-  font-family: 'Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI Emoji', var(--body-font-family);
+  font-family: var(--body-font-family);
   font-size: 1.5rem;
   flex-shrink: 0;
   line-height: 1;
