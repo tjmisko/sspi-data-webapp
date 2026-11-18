@@ -82,6 +82,10 @@ NUMBER_PATTERN = re.compile(r"^-?\d+\.?\d*$")
 # Used by the bounded-output proof.
 BOUNDED_AGGREGATORS = frozenset(["average", "min", "max"])
 
+# Float tolerance when checking that convex-combination weights sum to 1
+# (e.g. 0.1 + 0.2 + 0.7 is not exactly 1.0 in floating point).
+WEIGHT_SUM_TOLERANCE = 1e-9
+
 
 # =============================================================================
 # Token Types and Classes
@@ -584,7 +588,61 @@ def _is_bounded(node) -> bool:
             return True
         if node.name in BOUNDED_AGGREGATORS:
             return all(_is_bounded(arg) for arg in node.args)
+        return False
+    if isinstance(node, BinaryOp):
+        # Convex combinations: a non-negative combination of bounded terms whose
+        # total weight is exactly 1 lies in [0, 1].
+        total = _nonneg_weight_total(node)
+        return total is not None and abs(total - 1.0) <= WEIGHT_SUM_TOLERANCE
     return False
+
+
+def _nonneg_weight_total(node) -> float | None:
+    """
+    Total weight of `node` viewed as a non-negative combination of bounded terms.
+
+    The node's value then lies in [0, total]. Returns None if the node is not such
+    a combination. Accepted forms:
+      - a bounded term (goalpost / average / min / max / nested convex sum): 1
+      - A + B                      : weight(A) + weight(B)
+      - c * A  or  A * c           : c * weight(A), c a literal >= 0
+      - A / k                      : weight(A) / k, k a literal > 0
+    Subtraction, unary minus, raw datasets, bare numbers and non-literal weights
+    or divisors all yield None.
+    """
+    if isinstance(node, FunctionCall):
+        return 1.0 if _is_bounded(node) else None
+    if not isinstance(node, BinaryOp):
+        return None
+
+    if node.op == "+":
+        left = _nonneg_weight_total(node.left)
+        right = _nonneg_weight_total(node.right)
+        if left is None or right is None:
+            return None
+        return left + right
+
+    if node.op == "*":
+        left_const = _constant_value(node.left)
+        right_const = _constant_value(node.right)
+        if (left_const is None) == (right_const is None):
+            return None  # both constant, or neither (non-constant weight)
+        weight, other = (
+            (left_const, node.right) if left_const is not None else (right_const, node.left)
+        )
+        if weight < 0:
+            return None
+        other_total = _nonneg_weight_total(other)
+        return None if other_total is None else weight * other_total
+
+    if node.op == "/":
+        divisor = _constant_value(node.right)
+        if divisor is None or divisor <= 0:
+            return None
+        left_total = _nonneg_weight_total(node.left)
+        return None if left_total is None else left_total / divisor
+
+    return None
 
 
 def _collect_refs(node, dataset_codes: set[str], flags: dict) -> None:
@@ -655,6 +713,8 @@ def validate_score_function(
         raise ScoreFunctionValidationError(
             "Score must be a goalpost() result, or an average/min/max of goalposted "
             "values, to guarantee output in [0, 1]"
+            " (weighted sums of goalposted values are also allowed when the "
+            "non-negative constant weights sum to 1)"
         )
 
     # Collect dataset codes and goalpost-variable usage from the AST.

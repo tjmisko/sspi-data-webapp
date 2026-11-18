@@ -511,7 +511,7 @@ class SSPICustomUserStructure(MongoWrapper):
             result = self.delete_one({"config_id": config_id, "username": username})
         return result > 0
 
-    def set_scored_hash(self, config_id: str, scored_hash: str) -> bool:
+    def set_scored_hash(self, config_id: str, scored_hash: str, baseline_version: str | None = None) -> bool:
         """
         Update a configuration with its scored_hash after scoring completes.
 
@@ -531,6 +531,7 @@ class SSPICustomUserStructure(MongoWrapper):
             {
                 "$set": {
                     "scored_hash": scored_hash,
+                    "scored_baseline_version": baseline_version,
                     "scored_at": datetime.now(timezone.utc).isoformat()
                 }
             }
@@ -551,7 +552,7 @@ class SSPICustomUserStructure(MongoWrapper):
         """
         result = self._mongo_database.update_one(
             {"config_id": config_id},
-            {"$unset": {"scored_hash": "", "scored_at": ""}}
+            {"$unset": {"scored_hash": "", "scored_baseline_version": "", "scored_at": ""}}
         )
         return result.modified_count > 0
 

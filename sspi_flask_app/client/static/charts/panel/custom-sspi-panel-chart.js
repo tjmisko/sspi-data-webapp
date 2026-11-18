@@ -57,11 +57,11 @@ class CustomSSPIPanelChart extends PanelChart {
 
     initItemTree() {
         this.itemTree = document.createElement('div');
-        this.itemTree.classList.add('custom-sspi-tree-container');
+        this.itemTree.classList.add('sspi-tree-container', 'custom-sspi-tree-container');
         this.itemTree.innerHTML = `
-            <div class="custom-sspi-tree-description">
-                <h3 class="custom-sspi-tree-header">Custom SSPI Structure</h3>
-                <p class="custom-sspi-tree-description-text">
+            <div class="sspi-tree-description custom-sspi-tree-description">
+                <h3 class="sspi-tree-header custom-sspi-tree-header">Custom SSPI Structure</h3>
+                <p class="sspi-tree-description-text custom-sspi-tree-description-text">
                     Explore the scores across your custom SSPI structure below. Click on an item to view its data.
                 </p>
             </div>
@@ -73,7 +73,7 @@ class CustomSSPIPanelChart extends PanelChart {
     initRoot() {
         this.initItemTree();
         this.root = document.createElement('div');
-        this.root.classList.add('custom-panel-chart-root-container');
+        this.root.classList.add('panel-chart-root-container', 'custom-panel-chart-root-container');
         this.root.appendChild(this.itemTree);
         this.parentElement.appendChild(this.root);
     }

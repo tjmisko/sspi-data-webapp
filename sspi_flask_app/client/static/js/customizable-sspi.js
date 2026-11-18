@@ -1699,6 +1699,13 @@ class CustomizableSSPIStructure {
                 }
             }
         }, true);
+        // Clear a stale-dataset marker as soon as the formula stops referencing the code
+        this.container.addEventListener('input', e => {
+            const el = e.target;
+            if (!el.classList?.contains('editable-score-function') || !el.dataset.staleDatasetCodes) return;
+            const indicatorEl = el.closest('[data-indicator-code]');
+            if (indicatorEl) this._syncStaleDatasetMarker(el, indicatorEl);
+        });
         // Track contenteditable changes for undo/redo
         let editingElement = null;
         let originalValue = null;
@@ -2199,11 +2206,13 @@ class CustomizableSSPIStructure {
                                 selectedDatasetsDiv.insertBefore(datasetItem, items[position]);
                             }
                             this._setupDatasetHandlers(datasetItem, selectedDatasetsDiv, indicatorCode, true);
+                            this._syncStaleDatasetMarkerForIndicator(indicatorCode);
                             this.flagUnsaved();
                             this.validate();
                         },
                         redo: () => {
                             datasetItem.remove();
+                            this._flagStaleDatasetReference(indicatorCode, datasetCode, { notify: false });
                             this.flagUnsaved();
                             this.validate();
                         }
@@ -2211,6 +2220,7 @@ class CustomizableSSPIStructure {
                 }
 
                 datasetItem.remove();
+                this._flagStaleDatasetReference(indicatorCode, datasetCode);
                 this.flagUnsaved();
                 this.validate();
             });
@@ -2218,6 +2228,19 @@ class CustomizableSSPIStructure {
     }
 
     // ========== SECTION 4: API Methods - Indicators ==========
+
+    /**
+     * Placeholder details for a dataset code that has no dataset metadata.
+     * @private
+     */
+    _unknownDatasetDetails(datasetCode) {
+        return {
+            DatasetCode: datasetCode,
+            DatasetName: 'No metadata available',
+            Description: 'No metadata available for this dataset.',
+            Unknown: true
+        };
+    }
 
     /**
      * Private method: Add dataset to an indicator element (may or may not be in DOM yet)
@@ -2242,10 +2265,10 @@ class CustomizableSSPIStructure {
         }
 
         // Lookup dataset details (always from this.datasetDetails)
-        const details = this.datasetDetails[datasetCode];
-        if (!details) {
-            return { success: false, error: `Dataset ${datasetCode} not found in datasetDetails` };
-        }
+        // A code with no dataset metadata is still part of the config: keep it
+        // as an unknown dataset so it is never silently dropped.
+        const details = this.datasetDetails[datasetCode] || this._unknownDatasetDetails(datasetCode);
+        const isUnknown = details.Unknown === true;
 
         // Create dataset item element
         const formatNumber = (num) => num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -2264,6 +2287,10 @@ class CustomizableSSPIStructure {
 
         const datasetItem = document.createElement('div');
         datasetItem.classList.add('dataset-item');
+        if (isUnknown) {
+            datasetItem.classList.add('dataset-item-unknown');
+            datasetItem.title = 'No dataset metadata is available for ' + datasetCode + '. It is kept in this indicator.';
+        }
         datasetItem.dataset.datasetCode = datasetCode;
         datasetItem.dataset.expanded = 'false';
         datasetItem.innerHTML = `
@@ -2366,6 +2393,67 @@ class CustomizableSSPIStructure {
     }
 
     /**
+     * Record that a removed dataset code may still be referenced by an
+     * indicator's score function, and surface that to the user. Does not
+     * rewrite the formula.
+     * @private
+     */
+    _flagStaleDatasetReference(indicatorCode, datasetCode, { notify = true } = {}) {
+        const indicatorEl = this.findElementByCode(indicatorCode, 'Indicator');
+        const scoreFunctionEl = indicatorEl?.querySelector('.editable-score-function');
+        if (!scoreFunctionEl) return;
+        if (!this._scoreFunctionReferencesCode(scoreFunctionEl, datasetCode)) return;
+        const codes = new Set((scoreFunctionEl.dataset.staleDatasetCodes || '').split(',').filter(Boolean));
+        codes.add(datasetCode);
+        scoreFunctionEl.dataset.staleDatasetCodes = Array.from(codes).join(',');
+        this._syncStaleDatasetMarker(scoreFunctionEl, indicatorEl);
+        if (notify) {
+            notifications.warning(
+                'The score function for ' + indicatorCode + ' still uses ' + datasetCode + ', which is no longer in its dataset list. Edit the score function.',
+                8000
+            );
+        }
+    }
+
+    /** @private */
+    _scoreFunctionReferencesCode(scoreFunctionEl, code) {
+        const escaped = code.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        return new RegExp(`(^|[^A-Za-z0-9_])${escaped}([^A-Za-z0-9_]|$)`).test(scoreFunctionEl.textContent);
+    }
+
+    /**
+     * Re-evaluate the stale-dataset marker on a score function: a code stays
+     * flagged only while the formula references it and the indicator no longer
+     * lists it. Clears the marker once nothing is stale.
+     * @private
+     */
+    _syncStaleDatasetMarker(scoreFunctionEl, indicatorEl) {
+        const stored = (scoreFunctionEl.dataset.staleDatasetCodes || '').split(',').filter(Boolean);
+        if (stored.length === 0) return;
+        const stale = stored.filter(code =>
+            !indicatorEl.querySelector(`.selected-datasets [data-dataset-code="${code}"]`) &&
+            this._scoreFunctionReferencesCode(scoreFunctionEl, code));
+        if (stale.length === 0) {
+            delete scoreFunctionEl.dataset.staleDatasetCodes;
+            scoreFunctionEl.classList.remove('score-function-invalid');
+            scoreFunctionEl.style.outline = '';
+            scoreFunctionEl.removeAttribute('title');
+            return;
+        }
+        scoreFunctionEl.dataset.staleDatasetCodes = stale.join(',');
+        scoreFunctionEl.classList.add('score-function-invalid');
+        scoreFunctionEl.style.outline = '2px solid var(--error-color)';
+        scoreFunctionEl.title = 'Score function references ' + stale.join(', ') + ', which ' + (stale.length > 1 ? 'are' : 'is') + ' not in this indicator\'s dataset list. Edit the formula or restore the dataset.';
+    }
+
+    /** Re-sync the stale marker for an indicator (after undo/redo). @private */
+    _syncStaleDatasetMarkerForIndicator(indicatorCode) {
+        const indicatorEl = this.findElementByCode(indicatorCode, 'Indicator');
+        const scoreFunctionEl = indicatorEl?.querySelector('.editable-score-function');
+        if (scoreFunctionEl) this._syncStaleDatasetMarker(scoreFunctionEl, indicatorEl);
+    }
+
+    /**
      * Remove dataset from an indicator
      * @param {string} indicatorCode - The indicator code
      * @param {Object} options - Options object
@@ -2412,13 +2500,16 @@ class CustomizableSSPIStructure {
                 } else {
                     selectedDatasetsDiv.insertBefore(datasetItem, siblings[position]);
                 }
+                this._syncStaleDatasetMarkerForIndicator(indicatorCode);
                 this.validate();
             },
             redo: () => {
                 datasetItem.remove();
+                this._flagStaleDatasetReference(indicatorCode, datasetCode, { notify: false });
                 this.validate();
             }
         });
+        this._flagStaleDatasetReference(indicatorCode, datasetCode);
         this.flagUnsaved();
         this.validate();
         return { success: true, action: action };
@@ -2468,10 +2559,7 @@ class CustomizableSSPIStructure {
             const selectedDatasetsDiv = indEl.querySelector('.selected-datasets');
             if (selectedDatasetsDiv) {
                 datasetCodes.forEach(datasetCode => {
-                    const details = this.datasetDetails[datasetCode];
-                    if (details) {
-                        this.addDataset(datasetCode, indicatorCode, {datasetDetails: details });
-                    }
+                    this.addDataset(datasetCode, indicatorCode);
                 });
             }
         }
@@ -2863,15 +2951,8 @@ class CustomizableSSPIStructure {
                 // Add new datasets
                 const newDatasetElements = [];
                 for (const datasetCode of datasetCodes) {
-                    const datasetDetails = this.datasetDetails[datasetCode];
-                    if (!datasetDetails) {
-                        console.warn(`Dataset ${datasetCode} not found in datasetDetails`);
-                        continue;
-                    }
-
                     // Use existing method to add dataset without recording individual actions
                     const result = this.addDataset(datasetCode, currentCode, {
-                        datasetDetails,
                         record: false // Don't record individual add actions
                     });
 
@@ -4957,7 +5038,7 @@ class CustomizableSSPIStructure {
             const scoreFunctionEl = card?.querySelector('.editable-score-function');
             if (scoreFunctionEl) {
                 scoreFunctionEl.classList.add('score-function-invalid');
-                scoreFunctionEl.style.outline = '2px solid var(--color-error, #d33)';
+                scoreFunctionEl.style.outline = '2px solid var(--error-color)';
                 scoreFunctionEl.title = error.message;
             }
         });
@@ -5843,6 +5924,18 @@ class CustomizableSSPIStructure {
         console.log('Cleared undo/redo history after initial metadata import');
         this.markInvalidIndicatorPlacements();
         this.markInvalidNestedCategories();
+        // A config restored from a saved or cached session can already carry a
+        // score function that names a removed dataset; mark it on load too.
+        this.container.querySelectorAll('.indicator-card').forEach(indicatorEl => {
+            const scoreFunctionEl = indicatorEl.querySelector('.editable-score-function');
+            if (!scoreFunctionEl) return;
+            const referenced = scoreFunctionEl.textContent.match(/\b[A-Z][A-Z0-9]*_[A-Z0-9_]+\b/g) || [];
+            const missing = [...new Set(referenced)].filter(code =>
+                !indicatorEl.querySelector('.selected-datasets [data-dataset-code="' + code + '"]'));
+            if (missing.length === 0) return;
+            scoreFunctionEl.dataset.staleDatasetCodes = missing.join(',');
+            this._syncStaleDatasetMarker(scoreFunctionEl, indicatorEl);
+        });
         const validation = this.validateHierarchy();
         if (validation.errors && validation.errors.length > 0) {
             console.error('Hierarchy errors after import:', validation.errors);
