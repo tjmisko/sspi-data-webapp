@@ -18,15 +18,26 @@ def configure_logging(app):
     log_dir = app.config.get('LOG_DIR')
     handlers = [console_handler]
     if log_dir:
-        os.makedirs(log_dir, exist_ok=True)
-        file_handler = RotatingFileHandler(
-            os.path.join(log_dir, 'sspi.world.log'),
-            maxBytes=10240,
-            backupCount=10
-        )
-        file_handler.setFormatter(formatter)
-        file_handler.setLevel(log_level)
-        handlers.append(file_handler)
+        # The file log is a convenience; it must never stop the app from
+        # booting. A release directory the service user cannot write to took
+        # production down (v1.4.0), so fall back to console-only logging.
+        try:
+            os.makedirs(log_dir, exist_ok=True)
+            file_handler = RotatingFileHandler(
+                os.path.join(log_dir, 'sspi.world.log'),
+                maxBytes=10240,
+                backupCount=10
+            )
+        except OSError as error:
+            console_handler.handle(logging.LogRecord(
+                __name__, logging.WARNING, __file__, 0,
+                "File logging disabled: cannot use LOG_DIR %s (%s)",
+                (log_dir, error), None,
+            ))
+        else:
+            file_handler.setFormatter(formatter)
+            file_handler.setLevel(log_level)
+            handlers.append(file_handler)
 
     # Set root logger config
     root_logger = logging.getLogger()

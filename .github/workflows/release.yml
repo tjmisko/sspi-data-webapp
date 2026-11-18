@@ -117,5 +117,37 @@ jobs:
           ln -sfn "$DIR" "$DEPLOY_BASE/current"
           ln -sfn "$DEPLOY_BASE/secrets/.env" ./.env
           sudo systemctl restart sspi
+          # restart returns before workers boot, and a crash-looping service
+          # flips between active and activating. Require three consecutive
+          # active readings 5s apart within 90s; otherwise fail the job.
+          stable=0
+          for attempt in $(seq 1 18); do
+            sleep 5
+            if systemctl is-active --quiet sspi; then
+              stable=$((stable + 1))
+            else
+              stable=0
+            fi
+            if [ "$stable" -ge 3 ]; then
+              echo "sspi is active and stable"
+              break
+            fi
+          done
+          if [ "$stable" -lt 3 ]; then
+            echo "sspi did not stay active after restart" >&2
+            systemctl status sspi --no-pager -l || true
+            exit 1
+          fi
           EOF
         shell: bash
+
+      - name: Verify the site responds
+        run: |
+          for attempt in $(seq 1 12); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' https://sspi.world/ || true)
+            echo "attempt $attempt: HTTP $code"
+            if [ "$code" = 200 ]; then exit 0; fi
+            sleep 5
+          done
+          echo "sspi.world did not return 200 after deploy" >&2
+          exit 1

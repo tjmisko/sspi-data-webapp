@@ -12,7 +12,9 @@ class Config:
     # Flask config
     FLASK_ENV = 'development'
     LOG_LEVEL = logging.INFO
-    LOG_DIR = path.join(basedir, 'logs')
+    # SSPI_LOG_DIR overrides; otherwise logs/ beside the code. Production
+    # resolves this to the shared, service-writable directory (see ProdConfig).
+    LOG_DIR = environ.get('SSPI_LOG_DIR') or path.join(basedir, 'logs')
     # Secure default: only DevConfig/TestConfig opt into testing/login-disabled.
     TESTING = False
     SECRET_KEY = environ['SECRET_KEY']
@@ -36,8 +38,24 @@ class Config:
     ).strip().lower() in {"1", "true", "yes", "on"}
 
 
+def _production_log_dir():
+    """
+    The deploy links each release's .shared to /srv/sspi/shared, whose logs/
+    the service user writes (gunicorn's own logs live there). A fresh release
+    directory belongs to the deploy user, so logs/ beside the code is not
+    writable by the service.
+    """
+    if environ.get('SSPI_LOG_DIR'):
+        return environ['SSPI_LOG_DIR']
+    shared_logs = path.join(basedir, '.shared', 'logs')
+    if path.isdir(shared_logs):
+        return shared_logs
+    return path.join(basedir, 'logs')
+
+
 class ProdConfig(Config):
     FLASK_ENV = 'production'
+    LOG_DIR = _production_log_dir()
     DEBUG = False
     LOG_LEVEL = logging.INFO
     TESTING = False
