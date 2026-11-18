@@ -2392,7 +2392,7 @@ class CustomizableSSPIStructure {
         this._syncStaleDatasetMarker(scoreFunctionEl, indicatorEl);
         if (notify) {
             notifications.warning(
-                `The score function for ${indicatorCode} still uses ${datasetCode}, which is no longer in its dataset list. Edit the score function.`,
+                'The score function for ' + indicatorCode + ' still uses ' + datasetCode + ', which is no longer in its dataset list. Edit the score function.',
                 8000
             );
         }
@@ -2426,7 +2426,7 @@ class CustomizableSSPIStructure {
         scoreFunctionEl.dataset.staleDatasetCodes = stale.join(',');
         scoreFunctionEl.classList.add('score-function-invalid');
         scoreFunctionEl.style.outline = '2px solid var(--color-error, #d33)';
-        scoreFunctionEl.title = `Score function references ${stale.join(', ')}, which ${stale.length > 1 ? 'are' : 'is'} no longer in this indicator's dataset list. Edit the formula or restore the dataset.`;
+        scoreFunctionEl.title = 'Score function references ' + stale.join(', ') + ', which ' + (stale.length > 1 ? 'are' : 'is') + ' no longer in this indicator\'s dataset list. Edit the formula or restore the dataset.';
     }
 
     /** Re-sync the stale marker for an indicator (after undo/redo). @private */
