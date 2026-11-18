@@ -2425,7 +2425,7 @@ class CustomizableSSPIStructure {
         }
         scoreFunctionEl.dataset.staleDatasetCodes = stale.join(',');
         scoreFunctionEl.classList.add('score-function-invalid');
-        scoreFunctionEl.style.outline = '2px solid var(--color-error, #d33)';
+        scoreFunctionEl.style.outline = '2px solid var(--error-color)';
         scoreFunctionEl.title = 'Score function references ' + stale.join(', ') + ', which ' + (stale.length > 1 ? 'are' : 'is') + ' no longer in this indicator\'s dataset list. Edit the formula or restore the dataset.';
     }
 
@@ -5031,7 +5031,7 @@ class CustomizableSSPIStructure {
             const scoreFunctionEl = card?.querySelector('.editable-score-function');
             if (scoreFunctionEl) {
                 scoreFunctionEl.classList.add('score-function-invalid');
-                scoreFunctionEl.style.outline = '2px solid var(--color-error, #d33)';
+                scoreFunctionEl.style.outline = '2px solid var(--error-color)';
                 scoreFunctionEl.title = error.message;
             }
         });
@@ -5917,6 +5917,18 @@ class CustomizableSSPIStructure {
         console.log('Cleared undo/redo history after initial metadata import');
         this.markInvalidIndicatorPlacements();
         this.markInvalidNestedCategories();
+        // A config restored from a saved or cached session can already carry a
+        // score function that names a removed dataset; mark it on load too.
+        this.container.querySelectorAll('.indicator-card').forEach(indicatorEl => {
+            const scoreFunctionEl = indicatorEl.querySelector('.editable-score-function');
+            if (!scoreFunctionEl) return;
+            const referenced = scoreFunctionEl.textContent.match(/\b[A-Z][A-Z0-9]*_[A-Z0-9_]+\b/g) || [];
+            const missing = [...new Set(referenced)].filter(code =>
+                !indicatorEl.querySelector('.selected-datasets [data-dataset-code="' + code + '"]'));
+            if (missing.length === 0) return;
+            scoreFunctionEl.dataset.staleDatasetCodes = missing.join(',');
+            this._syncStaleDatasetMarker(scoreFunctionEl, indicatorEl);
+        });
         const validation = this.validateHierarchy();
         if (validation.errors && validation.errors.length > 0) {
             console.error('Hierarchy errors after import:', validation.errors);
