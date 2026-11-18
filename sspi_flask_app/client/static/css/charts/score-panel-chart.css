@@ -568,3 +568,15 @@
   font-size: 0.75em;
   font-style: italic;
 }
+
+/* Pillar, category, and indicator pages: chart and methodology sit on cards
+   like the rest of the site. Overrides the bare .methodology-section margins
+   from item-coverage-matrix.css. */
+.score-panel-card {
+  display: block;
+}
+
+.methodology-section.score-panel-card {
+  margin: var(--card-gap) 0 0;
+  font-size: 0.8em;
+}

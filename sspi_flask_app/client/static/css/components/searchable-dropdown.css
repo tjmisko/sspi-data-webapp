@@ -27,7 +27,7 @@
 
 .searchable-dropdown.is-open .searchable-dropdown-selected {
     border-color: var(--primary-color, #3b82f6);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 10%, transparent);
 }
 
 .searchable-dropdown-label {
@@ -158,7 +158,7 @@
 }
 
 .searchable-dropdown-option.is-selected {
-    background: rgba(59, 130, 246, 0.1);
+    background: color-mix(in srgb, var(--primary-color) 10%, transparent);
     color: var(--primary-color, #3b82f6);
     font-weight: 600;
 }
@@ -204,7 +204,7 @@
 }
 
 .dark-theme .searchable-dropdown-option.is-selected {
-    background: rgba(59, 130, 246, 0.2);
+    background: color-mix(in srgb, var(--primary-color) 20%, transparent);
 }
 
 /* Animation for opening/closing */

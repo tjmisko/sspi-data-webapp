@@ -385,8 +385,80 @@ class SSPIGlobeChart {
         }
     }
 
+    polygonFeatures() {
+        return this.geojson.features.filter(feat =>
+            GlobeMarkers.isPolygonFeature(feat) && feat.properties.ISO_A2 !== 'AQ'
+        );
+    }
+
+    markerFeatures() {
+        return this.geojson.features.filter(feat => typeof feat.markerLat === 'number');
+    }
+
+    isMarker(feat) {
+        return Boolean(feat) && typeof feat.markerLat === 'number';
+    }
+
+    markerAltitude(feat) {
+        if (this.altitudeCoding) {
+            const value = this.getVal(feat);
+            return value >= 0 ? value : 0.01;
+        }
+        return this.hoveredFeature === feat ? 0.04 : 0.02;
+    }
+
+    markerColor(feat) {
+        if (this.hoveredFeature === feat) {
+            return this.styles.greenAccent;
+        }
+        return this.colorScale(this.getVal(feat));
+    }
+
+    /**
+     * Countries too small for the polygon layer are drawn as points. They
+     * share hover, selection and pin state with the polygons, and a pinned
+     * marker is ringed because a point has no border to turn red.
+     */
+    renderMarkers() {
+        const markers = this.markerFeatures();
+        this.globe
+            .pointsData(markers)
+            .pointLat(feat => feat.markerLat)
+            .pointLng(feat => feat.markerLng)
+            .pointAltitude(feat => this.markerAltitude(feat))
+            .pointRadius(feat => feat.properties.pinned ? 1.1 : 0.8)
+            .pointColor(feat => this.markerColor(feat))
+            .pointsTransitionDuration(100)
+            .pointLabel(feat => this.getPolygonLabel(feat.properties))
+            .onPointHover(hoverD => {
+                if (!hoverD && !this.isMarker(this.hoveredFeature)) return;
+                this.hoveredCountry = hoverD ? hoverD.properties : null;
+                this.hoveredFeature = hoverD;
+                this.updateDataset();
+            })
+            .onPointClick(feat => this.selectFeature(feat))
+            .ringsData(markers.filter(feat => feat.properties.pinned))
+            .ringLat(feat => feat.markerLat)
+            .ringLng(feat => feat.markerLng)
+            .ringColor(() => t => `rgba(255, 0, 0, ${1 - t})`)
+            .ringMaxRadius(2.5)
+            .ringPropagationSpeed(2)
+            .ringRepeatPeriod(1200);
+    }
+
+    selectFeature(feat) {
+        if (!feat) return;
+        if (this.globeRotation && this.rotationOnClick) {
+            this.globe.controls().autoRotate = !this.globe.controls().autoRotate;
+        }
+        this.activeCountry = feat.properties;
+        this.countryInformationBox.dataset.unpopulated = false;
+        this.updateCountryInformation();
+    }
+
     async hydrateGlobe () {
         this.geojson = await fetch(this.globeDataURL).then(res => res.json())
+        this.geojson.features = GlobeMarkers.prepare(this.geojson.features).features
         this.getVal = (feat) => { 
             let series = feat.properties[this.tabBarState]
             if (!series) {
@@ -400,10 +472,12 @@ class SSPIGlobeChart {
         }
         this.setColorScale();
         this.globe
-            .polygonsData(this.geojson.features.filter(d => d.properties.ISO_A2 !== 'AQ'))
+            .polygonsData(this.polygonFeatures())
             .polygonCapColor(feat => this.colorScale(this.getVal(feat)))
             .polygonSideColor(feat => "transparent")
             .onPolygonHover(hoverD => {
+                // Leaving a polygon for a marker must not clear the marker hover
+                if (!hoverD && this.isMarker(this.hoveredFeature)) return;
                 this.hoveredCountry = hoverD ? hoverD.properties : null;
                 this.hoveredFeature = hoverD;
                 this.globe
@@ -411,15 +485,9 @@ class SSPIGlobeChart {
                     .polygonCapColor(d => d === hoverD ? this.styles.greenAccent : this.colorScale(this.getVal(d)))
                     .polygonSideColor(d => d === hoverD ? this.styles.greenAccent + 'cc' : "transparent")
             })
-            .onPolygonClick((p, e) => {
-                if (this.globeRotation && this.rotationOnClick) {
-                    this.globe.controls().autoRotate = !this.globe.controls().autoRotate;
-                }
-                this.activeCountry = p.properties;
-                this.countryInformationBox.dataset.unpopulated = false;
-                this.updateCountryInformation();
-            })
+            .onPolygonClick((p, e) => this.selectFeature(p))
             .polygonLabel(({ properties: d }) => this.getPolygonLabel(d))
+        this.renderMarkers()
         this.getPins()
     }
 
@@ -524,7 +592,7 @@ class SSPIGlobeChart {
     updateDataset() {
         this.setColorScale();
         this.globe
-            .polygonsData(this.geojson.features.filter(d => d.properties.ISO_A2 !== 'AQ'))
+            .polygonsData(this.polygonFeatures())
             .polygonCapColor(feat => {
                 // Preserve green color for currently hovered feature
                 if (this.hoveredFeature && feat === this.hoveredFeature) {
@@ -553,6 +621,7 @@ class SSPIGlobeChart {
                 }
             })
             .polygonStrokeColor(this.getStrokeColor())
+        this.renderMarkers()
     }
 
     updatePolygonLabel() {
@@ -574,7 +643,7 @@ class SSPIGlobeChart {
     toggleDarkenBorders() {
         this.darkenBorders = !this.darkenBorders;
         this.globe
-            .polygonsData(this.geojson.features.filter(d => d.properties.ISO_A2 !== 'AQ'))
+            .polygonsData(this.polygonFeatures())
             .polygonStrokeColor(this.getStrokeColor())
     }
 
@@ -591,6 +660,7 @@ class SSPIGlobeChart {
                 .polygonsTransitionDuration(750)
                 .polygonSideColor(feat => this.colorScale(this.getVal(feat)) + 'ef')
                 .onPolygonHover(hoverD => {
+                    if (!hoverD && this.isMarker(this.hoveredFeature)) return;
                     this.hoveredCountry = hoverD ? hoverD.properties : null;
                     this.hoveredFeature = hoverD;
                     this.globe
@@ -607,6 +677,7 @@ class SSPIGlobeChart {
                 .polygonsTransitionDuration(100)
                 .polygonAltitude(feat => this.getVal(feat) / 2)
                 .onPolygonHover(hoverD => {
+                    if (!hoverD && this.isMarker(this.hoveredFeature)) return;
                     this.hoveredCountry = hoverD ? hoverD.properties : null;
                     this.hoveredFeature = hoverD;
                     this.globe
@@ -615,6 +686,7 @@ class SSPIGlobeChart {
                         .polygonSideColor(d => d === hoverD ? this.styles.greenAccent + 'cc' : "transparent")
                 })
         }
+        this.renderMarkers()
     }
 
     toggleGlobeRotation() {

@@ -33,10 +33,12 @@ class SeriesCorrelationChart {
         if (urlSeriesX) this.seriesX = urlSeriesX;
         if (urlSeriesY) this.seriesY = urlSeriesY;
 
-        // If no series specified from any source, use defaults
-        if (!this.seriesX && !this.seriesY) {
-            this.seriesX = 'SSPI';
-            this.seriesY = 'WB_GDP_PERCAP_CURPRICE_USD';
+        // If no series specified from any source, walk the default pairs
+        // until one has data
+        this.usingDefaultPair = !this.seriesX && !this.seriesY;
+        this.defaultPairQueue = [];
+        if (this.usingDefaultPair) {
+            this.setSeriesPair(CorrelationDefaults.CANDIDATE_PAIRS[0]);
         }
 
         this.seriesOptions = null; // Populated from API
@@ -73,6 +75,12 @@ class SeriesCorrelationChart {
 
         // Fetch series options and initialize
         this.fetchSeriesOptions().then(() => {
+            if (this.usingDefaultPair) {
+                this.defaultPairQueue = CorrelationDefaults.candidatePairs(this.seriesOptions);
+                if (this.defaultPairQueue.length > 0) {
+                    this.setSeriesPair(this.defaultPairQueue.shift());
+                }
+            }
             this.populateSeriesDropdowns();
             if (this.seriesX && this.seriesY) {
                 this.loadCorrelationData();
@@ -117,9 +125,11 @@ class SeriesCorrelationChart {
             </div>
             <div class="panel-canvas-wrapper">
                 <canvas class="panel-chart-canvas"></canvas>
+                <p class="correlation-empty-state" role="status" hidden></p>
             </div>
         `;
         this.root.appendChild(this.chartContainer);
+        this.emptyState = this.chartContainer.querySelector('.correlation-empty-state');
 
         this.title = this.chartContainer.querySelector('.panel-chart-title');
         this.titleActions = this.chartContainer.querySelector('.panel-chart-title-actions');
@@ -428,7 +438,23 @@ class SeriesCorrelationChart {
         });
     }
 
+    setSeriesPair(pair) {
+        this.seriesX = pair[0];
+        this.seriesY = pair[1];
+    }
+
+    /** Show a value in a selector without firing its change handlers. */
+    syncSelector(selector, dropdown, value) {
+        selector.value = value;
+        if (!dropdown) return;
+        dropdown.selectedValue = value;
+        dropdown.selectedLabel = dropdown.getSelectedLabel();
+        dropdown.updateSelectedDisplay();
+    }
+
     handleSeriesChange() {
+        this.usingDefaultPair = false;
+        this.defaultPairQueue = [];
         this.seriesX = this.seriesXSelector.value;
         this.seriesY = this.seriesYSelector.value;
 
@@ -449,22 +475,43 @@ class SeriesCorrelationChart {
     }
 
     async loadCorrelationData() {
+        const seriesX = this.seriesX;
+        const seriesY = this.seriesY;
+        let response;
+        let payload = null;
         try {
             this.showLoading();
-            const response = await fetch(`/api/v1/correlation/${this.seriesX}/${this.seriesY}`);
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || `HTTP ${response.status}`);
-            }
-
-            this.rawData = await response.json();
-            this.updateCountryGroupSelector();
-            this.switchMode(this.currentMode);
+            response = await fetch('/api/v1/correlation/' + encodeURIComponent(seriesX) + '/' + encodeURIComponent(seriesY));
+            payload = await response.json().catch(() => null);
         } catch (error) {
             console.error('Failed to load correlation data:', error);
-            this.showError(`Failed to load data: ${error.message}`);
+            this.showError(CorrelationDefaults.errorStateMessage(seriesX, seriesY));
+            return;
         }
+        // A newer selection started while this one was loading
+        if (seriesX !== this.seriesX || seriesY !== this.seriesY) return;
+
+        if (CorrelationDefaults.isEmptyResult(response.status, payload)) {
+            if (this.usingDefaultPair && this.defaultPairQueue.length > 0) {
+                this.setSeriesPair(this.defaultPairQueue.shift());
+                this.syncSelector(this.seriesXSelector, this.searchableDropdownX, this.seriesX);
+                this.syncSelector(this.seriesYSelector, this.searchableDropdownY, this.seriesY);
+                await this.loadCorrelationData();
+                return;
+            }
+            this.showEmptyState(CorrelationDefaults.emptyStateMessage(seriesX, seriesY));
+            return;
+        }
+        if (!response.ok) {
+            console.error('Failed to load correlation data:', payload && payload.error);
+            this.showError(CorrelationDefaults.errorStateMessage(seriesX, seriesY));
+            return;
+        }
+
+        this.hideEmptyState();
+        this.rawData = payload;
+        this.updateCountryGroupSelector();
+        this.switchMode(this.currentMode);
     }
 
     updateURL() {
@@ -889,6 +936,7 @@ class SeriesCorrelationChart {
     /* ===== UI HELPERS ===== */
 
     showSelectionPrompt() {
+        this.hideEmptyState();
         this.title.textContent = 'Select series to begin';
         this.chart.data.datasets = [];
         this.chart.update();
@@ -898,10 +946,27 @@ class SeriesCorrelationChart {
         this.title.textContent = 'Loading...';
     }
 
-    showError(message) {
-        this.title.textContent = 'Error';
+    /** Clear the chart and explain in place why nothing is drawn. */
+    showEmptyState(message) {
+        this.rawData = null;
+        this.transformedData = null;
+        this.title.textContent = 'No data to compare';
         this.chart.data.datasets = [];
         this.chart.update();
+        if (!this.emptyState) return;
+        this.emptyState.textContent = message;
+        this.emptyState.hidden = false;
+    }
+
+    hideEmptyState() {
+        if (!this.emptyState) return;
+        this.emptyState.hidden = true;
+        this.emptyState.textContent = '';
+    }
+
+    showError(message) {
+        this.showEmptyState(message);
+        this.title.textContent = 'Error';
         console.error(message);
     }
 

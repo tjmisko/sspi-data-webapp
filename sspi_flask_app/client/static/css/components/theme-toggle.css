@@ -2,116 +2,63 @@
 
 .theme-toggle-container {
     display: flex;
-    flex-direction: column;
+    align-items: center;
     justify-content: center;
     align-self: stretch;
-    max-width: 5em;
     padding-left: 1em;
     border-left: var(--theme-border-thin);
 }
 
-.theme-label {
-    width: 100%;
-    text-align: center;
-    line-height: 1.25;
-    padding: .5em;
-    margin: 0;
-    font-family: var(--header-font-family, sans-serif);
-    font-size: .6em;
-    color: var(--low-importance-font-color, #fff);
-}
-
+/* Single icon button: shows the current theme's icon, click to switch */
 .theme-toggle {
-    display: flex;
     position: relative;
-    align-items: center;
-    cursor: pointer;
-    user-select: none;
-}
-
-/* Visually hidden but focusable, so the toggle stays keyboard-operable */
-.theme-toggle input {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
     padding: 0;
-    border: 0;
-    clip-path: inset(50%);
-    overflow: hidden;
-    white-space: nowrap;
+    border: var(--theme-border-thin, 1px solid #ccc);
+    border-radius: 50%;
+    background-color: var(--toggle-bg);
+    color: var(--moon-color);
+    cursor: pointer;
+    transition: background-color .2s, color .2s, border-color .2s;
 }
 
-.theme-toggle input:focus-visible ~ .slider {
+.theme-toggle[data-theme="light"] {
+    color: var(--sun-color);
+}
+
+.theme-toggle:hover {
+    background-color: var(--toggle-thumb);
+}
+
+.theme-toggle:focus-visible {
     outline: 2px solid var(--primary-color, #3b82f6);
     outline-offset: 2px;
 }
 
-.theme-toggle .icon {
-    width: 20px;
-    height: 20px;
+.theme-toggle-icon {
+    grid-area: 1 / 1;
+    width: 18px;
+    height: 18px;
     fill: none;
     stroke: currentColor;
     stroke-width: 2;
-    opacity: .7;
-    transition: opacity .3s;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: opacity .25s ease, transform .35s ease;
 }
 
-.theme-toggle .sun-svg {
-    position: absolute;
-    left: 39px;
-    display: flex;
-    justify-content: center;
-    color: var(--sun-color);
-    z-index: 3;
+.theme-toggle[data-theme="dark"] .theme-toggle-sun,
+.theme-toggle[data-theme="light"] .theme-toggle-moon {
+    opacity: 0;
+    transform: rotate(-90deg) scale(.5);
 }
 
-.theme-toggle .sun {
-    color: var(--sun-color);
-}
-
-.theme-toggle .moon-svg {
-    position: absolute;
-    display: flex;
-    justify-content: center;
-    left: 6px;
-    z-index: 3;
-}
-
-.theme-toggle .moon {
-    color: var(--moon-color);
-}
-
-.theme-toggle input:not(:checked) ~ .icons .sun {
-    opacity: .2;
-}
-
-.theme-toggle input:checked ~ .icons .moon {
-    opacity: .6;
-}
-
-.theme-toggle .slider {
-    position: relative;
-    width: 64px;
-    height: 32px;
-    border-radius: 30px;
-    border: var(--theme-border-thin, 1px solid #ccc);
-    background-color: var(--toggle-bg);
-    transition: background-color .3s;
-}
-
-.theme-toggle .slider::before {
-    content: "";
-    position: absolute;
-    height: 26px;
-    width: 26px;
-    left: 3px;
-    top: 3px;
-    background-color: var(--toggle-thumb);
-    border-radius: 50%;
-    transition: transform .3s;
-}
-
-.theme-toggle input:checked ~ .slider::before {
-    transform: translateX(32px);
+@media (prefers-reduced-motion: reduce) {
+    .theme-toggle,
+    .theme-toggle-icon {
+        transition: none;
+    }
 }

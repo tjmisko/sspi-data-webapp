@@ -5,7 +5,7 @@
 <script>
 // Backend data - csrf.js utility automatically uses window.csrfToken
 window.csrfToken = {{ csrf_token|tojson|safe }};
-window.sspiUsername = {{ current_user.username|tojson|safe if current_user.is_authenticated else 'null' }};
+window.sspiUsername = {{ (current_user.username if current_user.is_authenticated else none)|tojson }};
 window.sspiBaseConfig = {{ base_config|tojson|safe }};
 window.sspiScoring = {{ request.args.get('scoring', '')|tojson|safe }};
 window.sspiJobId = {{ request.args.get('job_id', '')|tojson|safe }};

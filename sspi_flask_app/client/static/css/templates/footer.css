@@ -21,10 +21,10 @@
 }
 
 .footer-col-title {
-  font-family: var(--title-font-family, sans-serif);
+  font-family: var(--header-font-family, sans-serif);
   color: var(--header-text-color, #000);
-  font-size: 0.9em;
-  font-weight: var(--title-weight, 400);
+  font-size: var(--type-subsection-title-size);
+  font-weight: var(--type-subsection-title-weight);
   margin: 0 0 0.5em 0;
 }
 

@@ -25,7 +25,7 @@ The Ecosystem category contains two indicators:
 1. Protection of Biodiversity (*hereinafter* "Biodiversity," or BIODIV); and
 2. IUCN Red List Index (*hereinafter* "Red List," or REDLST).
 
-The **Biodiverisity** is a direct quantification of country policy, while **Red List** is an outcome proxy metric.
+The **Biodiversity** is a direct quantification of country policy, while **Red List** is an outcome proxy metric.
 
 ### Data Availability
 <div id="imputation-chart-eco"></div>

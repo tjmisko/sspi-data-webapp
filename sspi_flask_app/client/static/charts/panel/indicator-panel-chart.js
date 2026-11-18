@@ -239,7 +239,7 @@ class IndicatorPanelChart extends PanelChart {
             errorDiv.className = 'chart-error-message';
             errorDiv.style.cssText = 'padding: 2rem; text-align: center; color: var(--text-color); background: var(--bg-color);';
             errorDiv.innerHTML = `
-                <p style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">⚠️ No Data Available</p>
+                <p style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">No Data Available</p>
                 <p style="font-size: 0.95rem; opacity: 0.8;">${errorMessage}</p>
             `;
 
@@ -448,7 +448,7 @@ class IndicatorPanelChart extends PanelChart {
                 // Fallback to old logic for backwards compatibility
                 if (code === 'sspi') {
                     displayName = 'SSPI';
-                    itemName = 'Social Policy and Progress Index';
+                    itemName = 'Sustainable and Shared-Prosperity Policy Index';
                     url = '/data';
                 } else if (i === 1) {
                     displayName = code.toUpperCase();

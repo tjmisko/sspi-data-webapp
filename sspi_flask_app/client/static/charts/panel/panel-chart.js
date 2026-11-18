@@ -548,42 +548,36 @@ class PanelChart {
         let dataset = this.chart.data.datasets.find((ds) => {
             return ds.CCode === this.activeCountry.CCode
         })
-        const startIndex = this.startYear - 2000;
-        let endIndex = this.endYear - 2000;
-        const yearScreen = dataset.score.slice(startIndex, endIndex)
-        const dataEndYear = this.startYear + yearScreen.length - 1;
-        const avgScore = ( yearScreen.reduce((a, b) => a + b) / yearScreen.length )
-        const minScore = Math.min(...yearScreen) 
-        const maxScore = Math.max(...yearScreen)
-        const minScoreIndex = yearScreen.findIndex((el) => el === minScore) 
-        const maxScoreIndex = yearScreen.findIndex((el) => el === maxScore) 
-        const minScoreYear = minScoreIndex === -1 ? "Error" : minScoreIndex + this.startYear
-        const maxScoreYear = maxScoreIndex === -1 ? "Error" : maxScoreIndex + this.startYear
-        const chgScore = (yearScreen[yearScreen.length - 1] - yearScreen[0]) / yearScreen[0] * 100
-        this.countryInformationBox.innerHTML = `
-<div id="#active-country-information" class="country-details-info">
-<h3 class="country-details-header"><span class="country-name">${this.activeCountry.CFlag}\u0020${this.activeCountry.CName}\u0020(${this.activeCountry.CCode})</span></h3>
-<div class="country-details-score-container">
+        if (!dataset) return;
+        const summaryStats = PanelSummaryStats.compute(dataset.score ?? dataset.data, this.startYear, this.endYear);
+        const formatScore = (value) => value === null ? "N/A" : value.toFixed(3);
+        const summaryLinesHTML = summaryStats === null
+            ? `<div class="summary-stat-line"><span class="summary-stat-label">No\u0020observed\u0020data\u0020between\u0020${this.startYear}\u0020and\u0020${this.endYear}</span></div>`
+            : `
     <div class="summary-stat-line">
         <span class="summary-stat-label">Average:</span> 
-        <span class="summary-stat-score">${avgScore.toFixed(3)}</span>
-        <span class="summary-stat-year">${this.startYear}-${dataEndYear}</span>
+        <span class="summary-stat-score">${formatScore(summaryStats.average)}</span>
+        <span class="summary-stat-year">${summaryStats.firstYear}-${summaryStats.lastYear}</span>
     </div>
     <div class="summary-stat-line">
         <span class="summary-stat-label">Change:</span>
-        <span class="summary-stat-score">${chgScore.toFixed(2)}%</span>
-        <span class="summary-stat-year">${this.startYear}-${dataEndYear}</span>
+        <span class="summary-stat-score">${summaryStats.change === null ? "N/A" : summaryStats.change.toFixed(2) + "%"}</span>
+        <span class="summary-stat-year">${summaryStats.firstYear}-${summaryStats.lastYear}</span>
     </div>
     <div class="summary-stat-line">
         <span class="summary-stat-label">Minimum:</span>
-        <span class="summary-stat-score">${minScore.toFixed(3)}</span>
-        <span class="summary-stat-year">${minScoreYear}</span>
+        <span class="summary-stat-score">${formatScore(summaryStats.minimum)}</span>
+        <span class="summary-stat-year">${summaryStats.minimumYear}</span>
     </div>
     <div class="summary-stat-line">
         <span class="summary-stat-label">Maximum:</span>
-        <span class="summary-stat-score">${maxScore.toFixed(3)}</span>
-        <span class="summary-stat-year">${maxScoreYear}</span>
-    </div>
+        <span class="summary-stat-score">${formatScore(summaryStats.maximum)}</span>
+        <span class="summary-stat-year">${summaryStats.maximumYear}</span>
+    </div>`;
+        this.countryInformationBox.innerHTML = `
+<div id="#active-country-information" class="country-details-info">
+<h3 class="country-details-header"><span class="country-name">${this.activeCountry.CFlag}\u0020${this.activeCountry.CName}\u0020(${this.activeCountry.CCode})</span></h3>
+<div class="country-details-score-container">${summaryLinesHTML}
 </div>
 <div class="country-details-actions">
     <button class="${pinButtonClass}" data-country-code="${this.activeCountry.CCode}">${pinButtonText}</button>

@@ -340,9 +340,9 @@ class CustomizableSSPIStructure {
         try {
             // If config is already scored and no unsaved changes, navigate to view scores
             if (this.hasScores && !this.unsavedChanges) {
-                // For default SSPI, navigate to main data overview
+                // For default SSPI, navigate to the main SSPI score view
                 if (this.baseConfig === 'sspi' || this.baseConfig === 'default') {
-                    window.location.href = '/data/overview';
+                    window.location.href = '/data';
                     return;
                 }
                 // For saved custom configs, navigate to custom visualization
@@ -358,7 +358,7 @@ class CustomizableSSPIStructure {
             // Check if user is authenticated (required for scoring)
             if (!window.sspiUsername) {
                 notifications.error('Please log in to score configurations');
-                window.location.href = '/auth/login?next=' + encodeURIComponent(window.location.pathname + window.location.search);
+                window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname + window.location.search);
                 return;
             }
 
@@ -752,7 +752,7 @@ class CustomizableSSPIStructure {
             // Check if user is authenticated
             if (!window.sspiUsername) {
                 notifications.error('Please log in to save configurations');
-                window.location.href = '/auth/login?next=' + encodeURIComponent(window.location.pathname + window.location.search);
+                window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname + window.location.search);
                 return;
             }
 
@@ -780,7 +780,7 @@ class CustomizableSSPIStructure {
             // Check if user is authenticated
             if (!window.sspiUsername) {
                 notifications.error('Please log in to save configurations');
-                window.location.href = '/auth/login?next=' + encodeURIComponent(window.location.pathname + window.location.search);
+                window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname + window.location.search);
                 return;
             }
 
@@ -2317,8 +2317,12 @@ class CustomizableSSPIStructure {
             </div>
         `;
 
-        // Setup event handlers
-        this._setupDatasetHandlers(datasetItem, selectedDatasetsDiv, indicatorCode, record);
+        // Setup event handlers. `record` governs whether *adding* this dataset
+        // is an undoable action (false while loading a config). A later click
+        // on its remove button is always a user edit, so always record it;
+        // passing `record` here left removals of loaded datasets out of the
+        // undo history and the changes list.
+        this._setupDatasetHandlers(datasetItem, selectedDatasetsDiv, indicatorCode, true);
 
         // Get position before adding
         const position = selectedDatasetsDiv.querySelectorAll('.dataset-item').length;
@@ -5013,6 +5017,13 @@ class CustomizableSSPIStructure {
     async runPreflightValidation() {
         // Clear markers from the previous run before re-validating.
         this.clearScoreFunctionMarkers();
+
+        // The endpoint requires an account; say so instead of surfacing the
+        // raw 401 body.
+        if (!window.sspiUsername) {
+            notifications.warning('Sign in to check score functions against the server.', 6000);
+            return;
+        }
 
         const metadata = this.exportMetadata();
 
