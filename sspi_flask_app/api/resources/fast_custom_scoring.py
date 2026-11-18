@@ -137,6 +137,14 @@ def fetch_all_datasets_aggregated(
     return result
 
 
+def _row_means_ignoring_nan(data: np.ndarray) -> np.ndarray:
+    """Per-row mean over non-NaN cells, omitting rows that have none."""
+    present = ~np.isnan(data)
+    counts = present.sum(axis=1)
+    sums = np.where(present, data, 0.0).sum(axis=1)
+    return sums[counts > 0] / counts[counts > 0]
+
+
 def impute_dataset_vectorized(
     data: np.ndarray,
     reference_mask: np.ndarray,
@@ -145,10 +153,20 @@ def impute_dataset_vectorized(
     """
     Vectorized imputation for a dataset array.
 
-    Handles three scenarios:
+    Handles three scenarios, mirroring utilities.impute_dataset (the official
+    dataset-level imputation) so edited indicators get the same gap treatment:
     1. Entire dataset empty: fill with neutral_fill (0.5)
-    2. Country has no data: use reference class average
-    3. Country has partial data: forward/backward extrapolation
+    2. Country has no data: use the reference class average (mean of the
+       reference countries' own means)
+    3. Country has partial data: backward/forward extrapolation plus linear
+       interpolation
+
+    Known differences from the official pipeline: the official indicator
+    series are additionally filled by per-indicator imputation routes and
+    documented reference sets (sspi_imputed_data), which a user-edited
+    indicator cannot use; and the reference average here is taken over the
+    scored country set and year window only, while impute_dataset reads every
+    year stored for the dataset.
 
     Args:
         data: Array of shape (n_countries, n_years), may contain np.nan
@@ -179,8 +197,14 @@ def impute_dataset_vectorized(
         # Compute reference class average across all years
         reference_data = data[reference_mask, :]
         if reference_data.size > 0:
-            # Average over reference countries, ignoring NaN
-            reference_avg = np.nanmean(reference_data)
+            # Mean of each reference country's own mean (countries with no
+            # data excluded), exactly as utilities.impute_dataset does. This
+            # is NOT the pooled mean over every cell: a country with more
+            # observed years must not weigh more.
+            country_means = _row_means_ignoring_nan(reference_data)
+            reference_avg = (
+                float(np.mean(country_means)) if country_means.size else np.nan
+            )
             if not np.isnan(reference_avg):
                 imputed_data[no_data_countries, :] = reference_avg
                 logger.debug(f"Filled {np.sum(no_data_countries)} countries with reference average {reference_avg:.4f}")
