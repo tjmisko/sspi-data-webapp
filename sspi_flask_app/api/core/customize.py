@@ -1359,6 +1359,31 @@ def get_chart_data(config_id):
 # Panel Chart Endpoint for SSPIPanelChart
 # ============================================================================
 
+def to_unit_score_scale(line_docs: list[dict]) -> list[dict]:
+    """
+    Rescale custom line documents to the 0-1 scale of /api/v1/panel/score.
+
+    Custom panel data is stored on a 0-100 scale (yAxisMaxValue 100), but
+    ScorePanelChart and its subclasses fix the y axis at 0-1, so unscaled
+    custom lines rendered off the top of the chart. Documents already on the
+    unit scale pass through unchanged. Returns new dicts; input is not mutated.
+    """
+    scaled = []
+    for doc in line_docs:
+        if doc.get("yAxisMaxValue") != 100:
+            scaled.append(doc)
+            continue
+        out = dict(doc)
+        for field in ("data", "score"):
+            values = doc.get(field)
+            if isinstance(values, list):
+                out[field] = [v / 100 if isinstance(v, (int, float)) else v for v in values]
+        out["yAxisMinValue"] = 0
+        out["yAxisMaxValue"] = 1
+        scaled.append(out)
+    return scaled
+
+
 @customize_bp.route("/panel/score/<item_code>", methods=["GET"])
 @owner_or_admin_required
 def get_custom_panel_score(item_code):
@@ -1491,7 +1516,7 @@ def get_custom_panel_score(item_code):
 
         return jsonify({
             "success": True,
-            "data": line_data,
+            "data": to_unit_score_scale(line_data),
             "tree": tree,
             "itemCode": item_code,
             "itemName": item_name,
