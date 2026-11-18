@@ -80,6 +80,20 @@
   --badge-declined-color: #b45309; /* Orange for declines */
   --badge-default-color: #2563eb; /* Default blue */
 
+  /* Tinted status badges: a translucent fill plus theme-tuned text. The
+     *-color tokens above are opaque fills for white text; these are for
+     text on a tint, so they read the per-theme pillar accents. */
+  --badge-positive-bg: color-mix(in srgb, var(--sus-color) 15%, transparent);
+  --badge-positive-text-color: var(--sus-accent);
+  --badge-negative-bg: color-mix(in srgb, var(--negative-color) 15%, transparent);
+  --badge-negative-text-color: color-mix(in srgb, var(--negative-color), var(--chip-text-mix) 20%);
+  --badge-info-bg: color-mix(in srgb, var(--pg-color) 15%, transparent);
+  --badge-info-color: var(--pg-accent);
+  --badge-warning-bg: color-mix(in srgb, var(--warning-color) 15%, transparent);
+  --badge-warning-color: var(--warning-color);
+  --muted-text-color: var(--low-importance-font-color);
+  --warning-color: #b45309;
+
   /* Ranking Card Background Tints — opaque mixes so cards read against inset panels */
   --card-tint-positive: color-mix(in srgb, var(--sus-color) 7%, var(--box-background-color));
   --card-tint-negative: color-mix(in srgb, var(--negative-color) 7%, var(--box-background-color));
@@ -200,6 +214,7 @@
   --ms-accent: #FFA04D;
   /* Lightened from #4DA3FF, which read 4.1:1 on its own 12% chip tint. */
   --pg-accent: #66B0FF;
+  --warning-color: #f59e0b;
   /* Pole to mix chip/label text toward for contrast against this theme's surfaces */
   --chip-text-mix: white;
 }

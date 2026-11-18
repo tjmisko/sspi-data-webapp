@@ -106,9 +106,9 @@
 }
 
 .error-message {
-  background-color: color-mix(in srgb, #dc3545 15%, var(--box-background-color));
-  color: #dc3545;
-  border: 1px solid #dc3545;
+  background-color: color-mix(in srgb, var(--error-color) 15%, var(--box-background-color));
+  color: var(--error-color);
+  border: 1px solid var(--error-color);
   border-radius: 3px;
   padding: 0.625rem;
   margin-bottom: 0.875rem;

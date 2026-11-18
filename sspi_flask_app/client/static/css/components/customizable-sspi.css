@@ -261,7 +261,7 @@
 }
 
 .code-validation-message.error {
-  color: #dc3545;
+  color: var(--error-color);
 }
 
 .code-validation-message.success {
@@ -389,7 +389,7 @@
 }
 
 .input-error {
-  background-color: color-mix(in srgb, #ff0000 50%, var(--input-background-color) 50%)
+  background-color: color-mix(in srgb, var(--error-color) 50%, var(--input-background-color) 50%)
 }
 
 .indicator-config {
@@ -1289,7 +1289,7 @@
 .bubble-remove-btn:hover {
   background: color-mix(in srgb, var(--green-accent) 30%, transparent);
   transform: scale(1.2) translateZ(0);
-  color: #dc3545;
+  color: var(--error-color);
 }
 
 /* Search Container */
@@ -1537,13 +1537,13 @@
 }
 
 .dataset-remove-btn {
-  background-color: #dc3545;
+  background-color: var(--error-color);
   color: white;
-  border-color: #dc3545;
+  border-color: var(--error-color);
 }
 
 .dataset-remove-btn:hover {
-  background-color: #c82333;
+  background-color: color-mix(in srgb, var(--error-color), black 15%);
 }
 
 .dataset-limit-note {
@@ -1571,7 +1571,7 @@
 }
 
 .dataset-modal-clear:hover {
-  background-color: color-mix(in srgb, var(--input-background-color) 80%, #dc3545 20%);
+  background-color: color-mix(in srgb, var(--input-background-color) 80%, var(--error-color) 20%);
 }
 
 .dataset-modal-confirm {
@@ -2087,9 +2087,9 @@ to {
 
 /* Optional: Add icons or special styling for specific actions */
 .context-menu li[data-action="delete"]:hover {
-  background: color-mix(in srgb, #dc3545 10%, var(--box-background-color));
-  border-left-color: #dc3545;
-  color: #dc3545;
+  background: color-mix(in srgb, var(--error-color) 10%, var(--box-background-color));
+  border-left-color: var(--error-color);
+  color: var(--error-color);
 }
 
 /* Dataset options menu (similar styling for consistency) */
@@ -2411,8 +2411,8 @@ to {
 
 /* Temporary Invalid Placement Styles */
 .temporary-invalid-placement {
-  border: 2px dashed rgba(220, 53, 69, 0.6) !important;
-  background: color-mix(in srgb, #dc3545 3%, var(--box-background-color)) !important;
+  border: 2px dashed color-mix(in srgb, var(--error-color) 60%, transparent) !important;
+  background: color-mix(in srgb, var(--error-color) 3%, var(--box-background-color)) !important;
   position: relative;
   margin-top: 2.5rem !important;
   animation: invalidPulse 2s ease-in-out infinite;
@@ -2430,12 +2430,12 @@ to {
 
 @keyframes invalidPulse {
 0%, 100% {
-  border-color: rgba(220, 53, 69, 0.6);
-  box-shadow: 0 0 0 rgba(220, 53, 69, 0);
+  border-color: color-mix(in srgb, var(--error-color) 60%, transparent);
+  box-shadow: 0 0 0 color-mix(in srgb, var(--error-color) 0%, transparent);
 }
 50% {
-  border-color: rgba(255, 107, 122, 0.8);
-  box-shadow: 0 0 8px rgba(220, 53, 69, 0.2);
+  border-color: color-mix(in srgb, var(--error-color) 80%, white 20%);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--error-color) 20%, transparent);
 }
 }
 
@@ -2444,7 +2444,7 @@ to {
   position: absolute;
   top: -2rem;
   left: 0;
-  background: rgba(220, 53, 69, 0.9);
+  background: color-mix(in srgb, var(--error-color) 90%, transparent);
   color: white;
   padding: 0.3rem 0.7rem;
   border-radius: var(--border-radius);
@@ -2493,8 +2493,8 @@ to {
 
 /* Nested Category Invalid Styles */
 .nested-category-invalid {
-  border: 2px dashed rgba(220, 53, 69, 0.6) !important;
-  background: color-mix(in srgb, #dc3545 3%, var(--box-background-color)) !important;
+  border: 2px dashed color-mix(in srgb, var(--error-color) 60%, transparent) !important;
+  background: color-mix(in srgb, var(--error-color) 3%, var(--box-background-color)) !important;
   position: relative;
   margin-top: 2.5rem !important;
   animation: invalidPulse 2s ease-in-out infinite;
@@ -2517,7 +2517,7 @@ to {
   position: absolute;
   top: -2rem;
   left: 0;
-  background: rgba(220, 53, 69, 0.9);
+  background: color-mix(in srgb, var(--error-color) 90%, transparent);
   color: white;
   padding: 0.3rem 0.7rem;
   border-radius: var(--border-radius);
@@ -2704,14 +2704,14 @@ to {
 }
 
 .visualization-controls .close-viz-btn {
-  background-color: #dc3545;
+  background-color: var(--error-color);
   color: white;
-  border-color: #dc3545;
+  border-color: var(--error-color);
   font-weight: bold;
 }
 
 .visualization-controls .close-viz-btn:hover {
-  background-color: #c82333;
+  background-color: color-mix(in srgb, var(--error-color), black 15%);
 }
 
 .visualization-chart-container {
@@ -2996,9 +2996,9 @@ to {
 }
 
 .change-type-badge[data-change-type="remove"] {
-  background-color: color-mix(in srgb, #dc2626 20%, transparent);
-  color: #dc2626;
-  border: 1px solid #dc2626;
+  background-color: color-mix(in srgb, var(--badge-negative-color) 20%, transparent);
+  color: var(--badge-negative-text-color);
+  border: 1px solid var(--badge-negative-color);
 }
 
 .change-type-badge[data-change-type="move"] {
@@ -3009,7 +3009,7 @@ to {
 
 .change-type-badge[data-change-type="rename"] {
   background-color: color-mix(in srgb, var(--sspi-color) 20%, transparent);
-  color: #d97706;
+  color: var(--warning-color);
   border: 1px solid var(--sspi-color);
 }
 
@@ -3275,19 +3275,19 @@ to {
   border-color: var(--green-accent);
   color: white;
   transform: scale(1.15);
-  box-shadow: 0 2px 6px rgba(139, 163, 66, 0.4);
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--green-accent) 40%, transparent);
 }
 
 .step.completed {
   background: var(--green-accent);
   border-color: var(--green-accent);
   color: white;
-  box-shadow: 0 1px 4px rgba(139, 163, 66, 0.3);
+  box-shadow: 0 1px 4px color-mix(in srgb, var(--green-accent) 30%, transparent);
 }
 
 .step.completed:hover {
   transform: scale(1.08);
-  box-shadow: 0 2px 6px rgba(139, 163, 66, 0.4);
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--green-accent) 40%, transparent);
 }
 
 .step.locked {
@@ -3688,7 +3688,7 @@ to {
 .read-only-badge {
   margin-left: 8px;
   font-size: 0.75em;
-  color: var(--muted-text-color, #6c757d);
+  color: var(--muted-text-color);
   font-weight: normal;
 }
 
@@ -3840,13 +3840,13 @@ to {
 }
 
 .modal-btn-danger {
-  background: #dc3545;
+  background: var(--error-color);
   color: white;
   border: none;
 }
 
 .modal-btn-danger:hover {
-  background: #c82333;
+  background: color-mix(in srgb, var(--error-color), black 15%);
 }
 
 .modal-actions-stacked {
@@ -4187,7 +4187,7 @@ to {
 }
 
 .scoring-stage.has-dropped .stage-status {
-  color: var(--warning-color, #f59e0b);
+  color: var(--warning-color);
 }
 
 .dropped-indicators-details {
@@ -4201,7 +4201,7 @@ to {
   padding: 0.5rem 0.75rem;
   cursor: pointer;
   font-size: 0.8rem;
-  color: var(--warning-color, #f59e0b);
+  color: var(--warning-color);
   font-weight: 500;
   user-select: none;
 }
@@ -4211,7 +4211,7 @@ to {
 }
 
 .dropped-indicators-summary::-webkit-details-marker {
-  color: var(--warning-color, #f59e0b);
+  color: var(--warning-color);
 }
 
 .dropped-indicators-list {
@@ -4474,23 +4474,23 @@ to {
 }
 
 .change-type-badge[data-change-type="add"] {
-    background: var(--badge-positive-bg, #e6f4ea);
-    color: var(--badge-positive-color, #1e7e34);
+    background: var(--badge-positive-bg);
+    color: var(--badge-positive-text-color);
 }
 
 .change-type-badge[data-change-type="remove"] {
-    background: var(--badge-negative-bg, #fce8e6);
-    color: var(--badge-negative-color, #c62828);
+    background: var(--badge-negative-bg);
+    color: var(--badge-negative-text-color);
 }
 
 .change-type-badge[data-change-type="move"] {
-    background: var(--badge-info-bg, #e3f2fd);
-    color: var(--badge-info-color, #1565c0);
+    background: var(--badge-info-bg);
+    color: var(--badge-info-color);
 }
 
 .change-type-badge[data-change-type="rename"] {
-    background: var(--badge-warning-bg, #fff3e0);
-    color: var(--badge-warning-color, #e65100);
+    background: var(--badge-warning-bg);
+    color: var(--badge-warning-color);
 }
 
 .change-type-badge[data-change-type="other"] {

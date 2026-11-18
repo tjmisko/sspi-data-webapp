@@ -208,14 +208,14 @@ div:has(> .globegl-hover) {
 }
 
 .unpin-country-button {
-  background-color: #dc3545;
+  background-color: var(--error-color);
   color: white;
-  border: 1px solid #dc3545;
+  border: 1px solid var(--error-color);
 }
 
 .unpin-country-button:hover {
-  background-color: #c82333;
-  border-color: #c82333;
+  background-color: color-mix(in srgb, var(--error-color), black 15%);
+  border-color: color-mix(in srgb, var(--error-color), black 15%);
   transform: translateY(-1px);
 }
 
@@ -622,7 +622,7 @@ div:has(> .globegl-hover) {
 
 .year-value-display.year-input-error {
   animation: shake 0.3s;
-  background-color: rgba(255, 0, 0, 0.2);
+  background-color: color-mix(in srgb, var(--error-color) 20%, transparent);
 }
 
 @keyframes shake {

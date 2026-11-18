@@ -5,13 +5,11 @@
 .light-theme .download-section {
   --download-accent: #3b82f6;
   --download-accent-hover: #2563eb;
-  --download-accent-rgb: 59, 130, 246;
 }
 
 .dark-theme .download-section {
-  --download-accent: #AECC53;
-  --download-accent-hover: #8BA342;
-  --download-accent-rgb: 174, 204, 83;
+  --download-accent: var(--green-accent);
+  --download-accent-hover: color-mix(in srgb, var(--green-accent), black 15%);
 }
 
 .download-section {
@@ -70,7 +68,7 @@
 .form-control:focus {
   outline: none;
   border-color: var(--download-accent);
-  box-shadow: 0 0 0 2px rgba(var(--download-accent-rgb), 0.2);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--download-accent) 20%, transparent);
 }
 
 select[multiple] {
@@ -422,7 +420,7 @@ select[multiple] option:checked {
 .search-input:focus {
   outline: none;
   border-color: var(--download-accent);
-  box-shadow: 0 0 0 2px rgba(var(--download-accent-rgb), 0.2);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--download-accent) 20%, transparent);
 }
 
 .tree-container {
@@ -588,15 +586,15 @@ mark {
 }
 
 .download-message.error-message {
-  background-color: var(--error-background, #fee);
-  border-left-color: var(--error-border, #dc3545);
-  color: var(--error-text, #721c24);
+  background-color: color-mix(in srgb, var(--error-color) 10%, var(--box-background-color));
+  border-left-color: var(--error-color);
+  color: color-mix(in srgb, var(--error-color) 60%, var(--chip-text-mix));
 }
 
 .download-message.success-message {
-  background-color: var(--success-background, #d4edda);
-  border-left-color: var(--success-border, #28a745);
-  color: var(--success-text, #155724);
+  background-color: color-mix(in srgb, var(--sus-color) 12%, var(--box-background-color));
+  border-left-color: var(--sus-color);
+  color: var(--sus-accent);
 }
 
 .download-message .message-content {

@@ -150,7 +150,7 @@ ol.treeview-navigation li::marker {
 }
 
 .treeview-navigation a[role="treeitem"][aria-current] {
-  border-left: 2px solid #005a9c;
+  border-left: 2px solid var(--primary-color);
   background-color: var(--green-accent);
 }
 .treeview-navigation a[role="treeitem"] span.icon {
@@ -169,7 +169,7 @@ ol.treeview-navigation li::marker {
 
 .treeview-navigation a[role="treeitem"]:focus {
   outline: 0;
-  border: 2px #005a9c solid;
+  border: 2px var(--primary-color) solid;
 }
 
 .treeview-navigation a[role="treeitem"][aria-current]:focus {
@@ -184,7 +184,7 @@ ol.treeview-navigation li::marker {
 }
 
 .treeview-navigation a[role="treeitem"] span.icon:hover {
-  color: #333;
+  color: var(--text-color);
 }
 
 .treeview-navigation a[role="treeitem"] span.icon svg polygon:hover {
