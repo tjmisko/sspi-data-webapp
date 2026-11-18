@@ -2290,8 +2290,12 @@ class CustomizableSSPIStructure {
             </div>
         `;
 
-        // Setup event handlers
-        this._setupDatasetHandlers(datasetItem, selectedDatasetsDiv, indicatorCode, record);
+        // Setup event handlers. `record` governs whether *adding* this dataset
+        // is an undoable action (false while loading a config). A later click
+        // on its remove button is always a user edit, so always record it;
+        // passing `record` here left removals of loaded datasets out of the
+        // undo history and the changes list.
+        this._setupDatasetHandlers(datasetItem, selectedDatasetsDiv, indicatorCode, true);
 
         // Get position before adding
         const position = selectedDatasetsDiv.querySelectorAll('.dataset-item').length;
