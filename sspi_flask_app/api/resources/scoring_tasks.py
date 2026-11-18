@@ -25,6 +25,7 @@ from enum import Enum
 from threading import Thread
 from typing import Callable
 
+from sspi_flask_app.api.resources.change_detection import changed_indicator_codes
 from sspi_flask_app.api.resources.metadata_validator import (
     validate_custom_metadata,
     compute_config_hash,
@@ -568,8 +569,8 @@ def run_scoring_pipeline(
 
     Stages emitted to frontend:
     1. validate - Validate metadata & score functions
-    2. identify - Static stage marker (change detection removed)
-    3. scoring - Score all indicators (with progress bar)
+    2. identify - Detect indicators changed from the default SSPI
+    3. scoring - Compute changed indicators, reuse baseline for the rest
     4. aggregate - Aggregate hierarchy
     5. ranking - Compute ranks
     6. visualizations - Build visualizations (save results)
@@ -627,10 +628,17 @@ def run_scoring_pipeline(
         except Exception:
             valid_datasets = None  # Skip dataset validation if DB unavailable
 
+        # Only indicators changed from the default SSPI are score-function
+        # validated (and later recomputed); unchanged ones reuse the official
+        # baseline scores. Change detection runs on the post-drop metadata.
+        # None (detection failed) means validate and compute everything.
+        changed_codes = changed_indicator_codes(metadata)
+
         validation_result = validate_custom_metadata(
             metadata,
             valid_dataset_codes=valid_datasets,
-            validate_score_functions=True
+            validate_score_functions=True,
+            score_function_codes=changed_codes
         )
 
         if not validation_result.valid:
@@ -675,25 +683,38 @@ def run_scoring_pipeline(
             logger.warning(f"Cache check failed: {e}, proceeding with scoring")
 
         # =====================================================================
-        # Stage 2: Identify Indicators (static)
+        # Stage 2: Identify Indicators
         # =====================================================================
-        # Change detection was removed: the fast scorer always scores ALL
-        # indicators because the vectorized matrix multiply needs consistent
-        # dimensions. We still emit a static `identify` stage_complete so the
-        # frontend progress modal (which hardcodes an `identify` stage row)
-        # advances past this stage.
+        # Indicators changed from the default SSPI are recomputed from raw
+        # datasets; unchanged ones are filled from the official baseline
+        # scores (sspi_item_data). The `identify` stage_complete also advances
+        # the frontend progress modal past this stage.
         indicator_count = sum(
             1 for item in metadata if item.get("ItemType") == "Indicator"
         )
+        if changed_codes is None:
+            modified_count = indicator_count
+        else:
+            modified_count = sum(
+                1 for item in metadata
+                if item.get("ItemType") == "Indicator"
+                and (not item.get("ItemCode") or item.get("ItemCode") in changed_codes)
+            )
+        unchanged_count = indicator_count - modified_count
 
         job.emit_stage_complete(
             "identify",
-            f"Scoring {indicator_count} Indicators",
-            {"modified": indicator_count, "unchanged": 0}
+            f"Scoring {modified_count} Changed Indicators "
+            f"({unchanged_count} reuse official scores)",
+            {"modified": modified_count, "unchanged": unchanged_count}
         )
 
-        logger.info(f"Job {job.job_id}: scoring {indicator_count} indicators")
+        logger.info(
+            f"Job {job.job_id}: {modified_count} indicators to compute, "
+            f"{unchanged_count} reusing baseline scores"
+        )
 
+        # =====================================================================
         # =====================================================================
         # Stage 3: Score Indicators
         # =====================================================================
@@ -718,6 +739,7 @@ def run_scoring_pipeline(
         # Run the scoring pipeline (using fast vectorized implementation)
         all_scores = score_custom_configuration_fast(
             metadata,
+            modified_indicators=changed_codes,
             progress_callback=progress_callback
         )
 

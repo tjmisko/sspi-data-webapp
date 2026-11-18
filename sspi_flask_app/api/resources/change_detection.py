@@ -7,15 +7,33 @@ indicators and reusing cached scores for unchanged ones.
 
 Key Functions:
 - identify_modified_indicators: Compare custom config to defaults
+- compute_indicator_scoring_signature: Hash of everything that changes an
+  indicator's OWN score (see SCORE_AFFECTING_FIELDS)
 - get_default_indicator_hashes: Cache hash of default indicator configs
-- compute_indicator_hash: Hash scoring-relevant fields of an indicator
+
+What counts as "changed" for an indicator
+-----------------------------------------
+An indicator is CHANGED when any of these differ from the default SSPI:
+ScoreFunction (whitespace-normalized), DatasetCodes (order-sensitive, because
+the vectorized goalpost path reads the first listed dataset), LowerGoalpost,
+UpperGoalpost. A brand-new indicator code is CHANGED. If the default metadata
+cannot be loaded, every indicator is CHANGED (fail safe).
+
+Everything else leaves the indicator's own score untouched and therefore does
+NOT make it changed: Weight (applied during aggregation), the parent category
+or pillar (aggregation handles moves), names, descriptions and other display
+fields.
 """
 
+import hashlib
+import json
 import logging
-from functools import lru_cache
 from typing import NamedTuple
 from sspi_flask_app.models.database import sspi_metadata
-from sspi_flask_app.api.resources.metadata_validator import compute_indicator_hash
+from sspi_flask_app.api.resources.metadata_validator import (
+    compute_indicator_hash,
+    canonicalize_value,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +48,7 @@ class ChangeDetectionResult(NamedTuple):
     unchanged_indicators: set[str]   # Indicators with same scoring config as default
     new_indicators: set[str]         # Indicators not in default SSPI
     removed_indicators: set[str]     # Default indicators not in custom config
+    default_available: bool = True   # False if defaults could not be loaded
 
 
 # =============================================================================
@@ -38,6 +57,60 @@ class ChangeDetectionResult(NamedTuple):
 
 _default_indicator_hashes: dict[str, str] | None = None
 _default_indicator_details: dict[str, dict] | None = None
+_default_indicator_signatures: dict[str, str] | None = None
+
+# Indicator fields that change the indicator's own score. Weight is
+# deliberately absent: it only matters during aggregation.
+SCORE_AFFECTING_FIELDS = (
+    "DatasetCodes",
+    "ScoreFunction",
+    "LowerGoalpost",
+    "UpperGoalpost",
+)
+
+
+def compute_indicator_scoring_signature(indicator: dict) -> str:
+    """
+    Hash the fields that determine an indicator's own score.
+
+    Missing fields and None are equivalent. Strings are whitespace-normalized
+    and numbers canonicalized (1 == 1.0) via canonicalize_value. DatasetCodes
+    keep their order (the vectorized goalpost path scores the first dataset).
+    """
+    data = {}
+    for field_name in SCORE_AFFECTING_FIELDS:
+        value = indicator.get(field_name, None)
+        if field_name == "DatasetCodes" and isinstance(value, list):
+            value = [
+                " ".join(v.split()) if isinstance(v, str) else v
+                for v in value
+            ]
+        else:
+            value = canonicalize_value(value)
+        data[field_name] = value
+    json_str = json.dumps(
+        data, sort_keys=True, separators=(",", ":"), ensure_ascii=True
+    )
+    return hashlib.sha256(json_str.encode("utf-8")).hexdigest()[:16]
+
+
+def get_default_indicator_signatures() -> dict[str, str]:
+    """
+    Scoring signature of each default indicator, keyed by indicator code.
+
+    An empty result (defaults unavailable) is never cached so a later call
+    can recover once the database is reachable.
+    """
+    global _default_indicator_signatures
+    if _default_indicator_signatures is not None:
+        return _default_indicator_signatures
+    signatures = {
+        code: compute_indicator_scoring_signature(details)
+        for code, details in _load_default_indicators().items()
+    }
+    if signatures:
+        _default_indicator_signatures = signatures
+    return signatures
 
 
 def _load_default_indicators() -> dict[str, dict]:
@@ -97,8 +170,10 @@ def get_default_indicator_hashes() -> dict[str, str]:
 def clear_default_caches():
     """Clear cached default indicator data. Useful for testing or reloading."""
     global _default_indicator_hashes, _default_indicator_details
+    global _default_indicator_signatures
     _default_indicator_hashes = None
     _default_indicator_details = None
+    _default_indicator_signatures = None
     logger.info("Cleared default indicator caches")
 
 
@@ -119,8 +194,11 @@ def identify_modified_indicators(
     """
     Identify which indicators need recomputation.
 
-    Compares each indicator's scoring configuration (ScoreFunction, goalposts,
-    datasets) against the default SSPI configuration.
+    Compares each indicator's scoring signature (ScoreFunction, goalposts,
+    DatasetCodes; see SCORE_AFFECTING_FIELDS) against the default SSPI.
+    Weight and category/pillar placement do not count as changes.
+    If the default metadata is unavailable, every indicator is reported as
+    modified and default_available is False.
 
     Args:
         custom_metadata: User's custom configuration metadata
@@ -134,8 +212,9 @@ def identify_modified_indicators(
         >>> print(f"Modified: {result.modified_indicators}")
         >>> print(f"Unchanged: {result.unchanged_indicators}")
     """
-    default_hashes = get_default_indicator_hashes()
+    default_hashes = get_default_indicator_signatures()
     default_codes = set(default_hashes.keys())
+    default_available = bool(default_codes)
 
     # Extract indicators from custom metadata
     custom_indicators = {
@@ -149,6 +228,18 @@ def identify_modified_indicators(
     unchanged_indicators = set()
     new_indicators = set()
     removed_indicators = set()
+    if not default_available:
+        logger.warning(
+            "Default SSPI indicators unavailable; treating every indicator "
+            "as modified"
+        )
+        return ChangeDetectionResult(
+            modified_indicators=custom_codes,
+            unchanged_indicators=set(),
+            new_indicators=set(),
+            removed_indicators=set(),
+            default_available=False,
+        )
     # Check each custom indicator
     for code, indicator in custom_indicators.items():
         if code not in default_codes:
@@ -157,7 +248,7 @@ def identify_modified_indicators(
             modified_indicators.add(code)  # New = needs computation
             continue
         # Compare hash of scoring config
-        custom_hash = compute_indicator_hash(indicator)
+        custom_hash = compute_indicator_scoring_signature(indicator)
         default_hash = default_hashes[code]
 
         if custom_hash == default_hash:
@@ -188,6 +279,21 @@ def identify_modified_indicators(
         new_indicators=new_indicators,
         removed_indicators=removed_indicators
     )
+
+
+def changed_indicator_codes(custom_metadata: list[dict]) -> set[str] | None:
+    """
+    Codes of indicators whose own score must be (re)computed and validated.
+
+    Returns None if change detection fails for any reason, which callers
+    pass straight through as "validate/compute everything".
+    """
+    try:
+        items = [i for i in custom_metadata if isinstance(i, dict)]
+        return identify_modified_indicators(items).modified_indicators
+    except Exception as e:
+        logger.warning(f"Change detection failed ({e}); treating all as changed")
+        return None
 
 
 def _validate_against_actions(

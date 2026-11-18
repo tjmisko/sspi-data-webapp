@@ -170,7 +170,8 @@ def validate_custom_metadata(
     metadata: list[dict],
     valid_dataset_codes: set[str] | None = None,
     validate_score_functions: bool = True,
-    check_data_availability: bool = False
+    check_data_availability: bool = False,
+    score_function_codes: set[str] | None = None
 ) -> ValidationResult:
     """
     Validate complete custom SSPI metadata structure.
@@ -187,6 +188,11 @@ def validate_custom_metadata(
         valid_dataset_codes: Optional set of valid dataset codes for validation
         validate_score_functions: Whether to validate ScoreFunction strings
         check_data_availability: Whether to check if datasets have actual data
+        score_function_codes: If not None, ScoreFunctions are validated only
+            for indicators whose ItemCode is in this set (typically the
+            indicators changed from the default SSPI). Structure, hierarchy,
+            weights, datasets and goalposts are still validated for every
+            item. None validates every indicator's ScoreFunction.
 
     Returns:
         ValidationResult with errors, warnings, and dropped_indicators
@@ -252,7 +258,10 @@ def validate_custom_metadata(
             validate_indicator_metadata(
                 item,
                 valid_dataset_codes,
-                validate_score_functions,
+                validate_score_functions and (
+                    score_function_codes is None
+                    or item_code in score_function_codes
+                ),
                 result
             )
 

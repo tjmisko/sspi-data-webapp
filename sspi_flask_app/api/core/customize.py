@@ -41,6 +41,7 @@ from sspi_flask_app.api.resources.metadata_validator import (
     validate_custom_metadata,
     compute_config_hash,
 )
+from sspi_flask_app.api.resources.change_detection import changed_indicator_codes
 
 logger = logging.getLogger(__name__)
 
@@ -641,9 +642,13 @@ def validate_configuration():
 
         # Run the real validator: structural + hierarchy + per-parent weight
         # semantics + score-function checks. Returns structured errors/warnings.
+        # ScoreFunctions are validated only for indicators changed from the
+        # default SSPI: unchanged ones reuse official scores and are never
+        # parsed by the custom engine (None = validate all, fail safe).
         result = validate_custom_metadata(
             metadata,
-            validate_score_functions=True
+            validate_score_functions=True,
+            score_function_codes=changed_indicator_codes(metadata)
         )
         return jsonify({"success": True, **result.to_dict()})
     except Exception as e:

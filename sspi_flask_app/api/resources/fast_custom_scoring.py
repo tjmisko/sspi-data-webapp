@@ -18,7 +18,11 @@ import logging
 import numpy as np
 from typing import Callable
 
-from sspi_flask_app.models.database import sspi_clean_api_data, sspi_metadata
+from sspi_flask_app.models.database import (
+    sspi_clean_api_data,
+    sspi_item_data,
+    sspi_metadata,
+)
 from sspi_flask_app.api.resources.score_function_validator import (
     validate_score_function,
     safe_eval,
@@ -878,6 +882,62 @@ def compute_ranks_vectorized(all_scores: np.ndarray) -> np.ndarray:
     return ranks
 
 
+def fetch_baseline_indicator_scores(
+    indicator_codes: list[str],
+    country_codes: list[str],
+    start_year: int = DEFAULT_START_YEAR,
+    end_year: int = DEFAULT_END_YEAR
+) -> dict[str, np.ndarray]:
+    """
+    Fetch official indicator scores (sspi_item_data, the collection behind the
+    main site's data pages) for the given indicators.
+
+    Returns:
+        Dict mapping indicator code -> (n_countries, n_years) array, NaN where
+        no official score exists. Every requested code gets an array.
+    """
+    n_countries = len(country_codes)
+    n_years = end_year - start_year + 1
+    result = {
+        code: np.full((n_countries, n_years), np.nan, dtype=float)
+        for code in indicator_codes
+    }
+    if not indicator_codes or not country_codes:
+        return result
+    cursor = sspi_item_data.find(
+        {
+            "ItemCode": {"$in": list(indicator_codes)},
+            "ItemType": "Indicator",
+            "CountryCode": {"$in": country_codes},
+            "Year": {"$gte": start_year, "$lte": end_year},
+        },
+        {"_id": 0, "ItemCode": 1, "CountryCode": 1, "Year": 1, "Score": 1},
+    )
+    _fill_baseline_arrays(result, cursor, country_codes, start_year, end_year)
+    return result
+
+
+def _fill_baseline_arrays(
+    arrays: dict[str, np.ndarray],
+    docs,
+    country_codes: list[str],
+    start_year: int,
+    end_year: int
+) -> None:
+    """Place score docs (ItemCode, CountryCode, Year, Score) into arrays."""
+    country_to_idx = {code: idx for idx, code in enumerate(country_codes)}
+    for doc in docs:
+        array = arrays.get(doc.get("ItemCode"))
+        country_idx = country_to_idx.get(doc.get("CountryCode"))
+        year = doc.get("Year")
+        score = doc.get("Score")
+        if array is None or country_idx is None or score is None:
+            continue
+        if not isinstance(year, int) or not start_year <= year <= end_year:
+            continue
+        array[country_idx, year - start_year] = score
+
+
 # =============================================================================
 # Phase 5: Main Pipeline
 # =============================================================================
@@ -897,15 +957,21 @@ def score_custom_configuration_fast(
 
     Drop-in replacement for score_custom_configuration() with same interface.
 
-    NOTE: This function always scores ALL indicators in the metadata because
-    the matrix multiplication requires consistent dimensions. The metadata
-    should be pre-filtered to remove indicators with empty datasets before
-    calling this function.
+    Only indicators in `modified_indicators` are computed from raw datasets.
+    Every other indicator's row of the (n_indicators, n_countries, n_years)
+    score array is filled from the official baseline scores, so the matrix
+    multiplication still sees consistent dimensions. If `modified_indicators`
+    is None every indicator is computed (legacy behavior). Indicators without
+    an ItemCode are always computed. The metadata should be pre-filtered to
+    remove indicators with empty datasets before calling this function.
 
     Args:
         metadata: Custom SSPI metadata structure (pre-filtered for data availability)
-        modified_indicators: IGNORED - kept for interface compatibility
-        default_scores: IGNORED - kept for interface compatibility
+        modified_indicators: Codes of indicators to compute; the rest reuse
+            baseline scores. None computes all.
+        default_scores: Optional baseline score docs per indicator code
+            (item_code -> [{CountryCode, Year, Score}, ...]). If None the
+            baseline is read from sspi_item_data.
         country_codes: List of country codes to score (defaults to SSPI67)
         reference_group: Country group for reference class averaging
         start_year: Start year for scoring
@@ -927,10 +993,8 @@ def score_custom_configuration_fast(
         logger.warning(f"No country codes found for reference group {reference_group}")
         return {}
 
-    # Extract all indicators from metadata
-    # NOTE: We always score ALL indicators in the metadata because the
-    # aggregation matrix dimensions must match. The vectorized operations
-    # are fast enough that partial scoring is not necessary.
+    # Extract all indicators from metadata, split into those computed from raw
+    # datasets and those whose rows come from the official baseline scores.
     # The metadata should already be filtered to remove dropped indicators
     # (those with empty datasets) before calling this function.
     all_indicators = [
@@ -938,35 +1002,44 @@ def score_custom_configuration_fast(
         if item.get("ItemType") == "Indicator"
     ]
 
-    # Always score all indicators - matrix multiplication requires consistent dimensions
-    indicators_to_score = all_indicators
+    def _is_computed(ind: dict) -> bool:
+        if modified_indicators is None:
+            return True
+        code = ind.get("ItemCode")
+        return not code or code in modified_indicators
+
+    indicators_to_score = [ind for ind in all_indicators if _is_computed(ind)]
+    baseline_indicators = [ind for ind in all_indicators if not _is_computed(ind)]
 
     logger.info(
-        f"Fast pipeline: Scoring {len(indicators_to_score)} indicators"
+        f"Fast pipeline: computing {len(indicators_to_score)} indicators, "
+        f"reusing baseline scores for {len(baseline_indicators)}"
     )
 
     # Phase 1: Fetch datasets
     if progress_callback:
         progress_callback("scoring", 5, "Fetching datasets...")
 
-    # Collect all dataset codes needed
+    # Collect all dataset codes needed by the computed indicators
     dataset_codes = set()
     for ind in indicators_to_score:
         codes = ind.get("DatasetCodes", [])
         if codes:
             dataset_codes.update(codes)
 
-    if not dataset_codes:
+    if not dataset_codes and not baseline_indicators:
         logger.warning("No dataset codes found in indicators")
         return {}
 
-    logger.info(f"Fetching {len(dataset_codes)} datasets")
-    dataset_arrays = fetch_all_datasets_aggregated(
-        list(dataset_codes),
-        country_codes,
-        start_year,
-        end_year
-    )
+    dataset_arrays = {}
+    if dataset_codes:
+        logger.info(f"Fetching {len(dataset_codes)} datasets")
+        dataset_arrays = fetch_all_datasets_aggregated(
+            list(dataset_codes),
+            country_codes,
+            start_year,
+            end_year
+        )
 
     # Phase 2: Impute datasets
     if progress_callback:
@@ -991,13 +1064,57 @@ def score_custom_configuration_fast(
     if progress_callback:
         progress_callback("scoring", 40, "Scoring indicators...")
 
-    indicator_scores = score_indicators_vectorized(
+    computed_scores = score_indicators_vectorized(
         indicators_to_score,
         dataset_arrays,
         country_codes,
         start_year,
         end_year
     )
+
+    if baseline_indicators:
+        baseline_codes = [ind.get("ItemCode") for ind in baseline_indicators]
+        if default_scores is None:
+            baseline_arrays = fetch_baseline_indicator_scores(
+                baseline_codes, country_codes, start_year, end_year
+            )
+        else:
+            baseline_arrays = {
+                code: np.full(
+                    (len(country_codes), end_year - start_year + 1), np.nan
+                )
+                for code in baseline_codes
+            }
+            for code in baseline_codes:
+                _fill_baseline_arrays(
+                    baseline_arrays,
+                    ({**doc, "ItemCode": code} for doc in default_scores.get(code, [])),
+                    country_codes, start_year, end_year
+                )
+        # Aggregation is a plain matrix multiply, so a NaN cell in any row
+        # nulls every aggregate for that country-year (same as for computed
+        # rows). Surface gaps in the official data so they are diagnosable.
+        for code, arr in baseline_arrays.items():
+            n_nan = int(np.isnan(arr).sum())
+            if n_nan:
+                logger.warning(
+                    f"Baseline scores for {code} have {n_nan} missing "
+                    f"country-year cells out of {arr.size}"
+                )
+        # Merge in metadata order so rows line up with FastCustomSSPI.
+        indicator_scores = np.full(
+            (len(all_indicators), len(country_codes), end_year - start_year + 1),
+            np.nan, dtype=np.float64
+        )
+        computed_iter = iter(computed_scores)
+        for row, ind in enumerate(all_indicators):
+            if _is_computed(ind):
+                indicator_scores[row] = next(computed_iter)
+            else:
+                indicator_scores[row] = baseline_arrays[ind.get("ItemCode")]
+        indicators_to_score = all_indicators
+    else:
+        indicator_scores = computed_scores
 
     # Drop indicators that produced no usable score anywhere (NaN across every
     # country and year). This happens when a score function needs a dataset
@@ -1057,9 +1174,6 @@ def score_custom_configuration_fast(
         start_year,
         metadata
     )
-
-    # NOTE: default_scores parameter is ignored - we always score all indicators
-    # in the metadata for correct matrix multiplication dimensions
 
     if progress_callback:
         total_docs = sum(len(docs) for docs in result.values())
