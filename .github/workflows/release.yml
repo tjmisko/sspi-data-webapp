@@ -43,7 +43,7 @@ jobs:
             --exclude-vcs --exclude='__pycache__' --exclude='*.pyc' \
             --exclude='env' --exclude='logs' --exclude='tests' \
             --exclude='documentation' --exclude='*.egg-info' \
-            --exclude='.env' \
+            --exclude='.env' --exclude='./dist' \
             ./ local ./sspi_flask_app ./connector ./cli ./datasets \
             ./scripts ./config.py ./requirements.txt ./pyproject.toml
           (cd dist && sha256sum "${TAR}" > "sspi-${VER}.sha256")
