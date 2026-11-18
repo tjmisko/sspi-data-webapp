@@ -42,7 +42,7 @@ from sspi_flask_app.api.resources.metadata_validator import (
     compute_config_hash,
 )
 from sspi_flask_app.api.resources.change_detection import changed_indicator_codes
-from sspi_flask_app.api.resources.baseline_version import cache_key
+from sspi_flask_app.api.resources.baseline_version import cache_key, config_scores_are_current
 
 logger = logging.getLogger(__name__)
 
@@ -448,10 +448,10 @@ def load_configuration(config_id):
 
         # Check if configuration has been scored (has cached results)
         # Use the stored scored_hash which reflects the filtered metadata used during scoring
-        has_scores = False
         scored_hash = config.get("scored_hash")
-        if scored_hash:
-            has_scores = sspi_custom_panel_data.has_scores(scored_hash)
+        has_scores = config_scores_are_current(
+            config, sspi_custom_panel_data.has_scores
+        )
 
         logger.info(f"Loaded configuration {config_id} for user {user_id} (has_scores={has_scores}, scored_hash={scored_hash[:8] if scored_hash else 'None'}...)")
 

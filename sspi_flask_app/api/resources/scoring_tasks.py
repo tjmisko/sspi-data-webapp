@@ -25,6 +25,7 @@ from enum import Enum
 from threading import Thread
 from typing import Callable
 
+from sspi_flask_app.api.resources import baseline_version as baseline_versions
 from sspi_flask_app.api.resources.baseline_version import cache_key
 from sspi_flask_app.api.resources.change_detection import changed_indicator_codes
 from sspi_flask_app.api.resources.metadata_validator import (
@@ -669,7 +670,8 @@ def run_scoring_pipeline(
         # =====================================================================
         # Cache rows are keyed on (config hash, baseline version) so results
         # built on superseded official scores are never served.
-        config_hash = cache_key(compute_config_hash(metadata))
+        baseline_version = baseline_versions.get_baseline_version()
+        config_hash = cache_key(compute_config_hash(metadata), baseline_version)
         job.set_config_hash(config_hash)
 
         try:
@@ -820,7 +822,8 @@ def run_scoring_pipeline(
                 try:
                     sspi_custom_user_structure.set_scored_hash(
                         config_id=job.config_id,
-                        scored_hash=config_hash
+                        scored_hash=config_hash,
+                        baseline_version=baseline_version
                     )
                     logger.info(f"Updated config {job.config_id} with scored_hash {config_hash[:8]}...")
                 except Exception as hash_err:

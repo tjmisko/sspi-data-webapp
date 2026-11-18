@@ -16,6 +16,7 @@ from sspi_flask_app.api.core.dashboard import (
     build_indicators_data_static,
 )
 from sspi_flask_app.api.resources.utilities import parse_json, public_databases
+from sspi_flask_app.api.resources.baseline_version import config_scores_are_current
 from sspi_flask_app.models.database import (
     sspi_custom_user_structure,
     sspi_custom_panel_data,
@@ -424,10 +425,10 @@ def customize_load():
                 # the hash of the FILTERED metadata (indicators without data removed)
                 has_scores = False
                 try:
-                    scored_hash = config.get("scored_hash")
-                    if scored_hash:
-                        # Use the stored hash from when scoring completed
-                        has_scores = sspi_custom_panel_data.has_scores(scored_hash)
+                    # Stale if scored against an older official baseline
+                    has_scores = config_scores_are_current(
+                        config, sspi_custom_panel_data.has_scores
+                    )
                 except Exception as hash_err:
                     logger.warning(f"Error checking scores for config {config.get('config_id')}: {hash_err}")
 

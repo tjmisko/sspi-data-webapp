@@ -77,3 +77,21 @@ def cache_key(config_hash: str, baseline_version: str | None = None) -> str:
         f"{config_hash}:{baseline_version}".encode("utf-8")
     ).hexdigest()
     return digest[:32]
+
+
+def config_scores_are_current(config: dict, has_scores) -> bool:
+    """
+    True when a saved config's stored results exist and were computed against
+    the current official baseline.
+
+    `has_scores` is a callable taking a scored_hash (the custom panel store's
+    has_scores). A config scored before the baseline version was recorded, or
+    against an older baseline, counts as unscored so the UI asks for a rescore
+    instead of showing stale results.
+    """
+    scored_hash = config.get("scored_hash")
+    if not scored_hash:
+        return False
+    if config.get("scored_baseline_version") != get_baseline_version():
+        return False
+    return bool(has_scores(scored_hash))
