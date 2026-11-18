@@ -28,6 +28,32 @@ from sspi_flask_app.api.resources.custom_scoring import (
 )
 from sspi_flask_app.models.errors import InvalidDocumentFormatError, LimitExceededError
 from sspi_flask_app.models.rank import SSPIRankingTable
+
+
+def build_dataset_details_map(dataset_details_list, metadata_items):
+    """Map DatasetCode -> details for the builder.
+
+    Any dataset code referenced by an indicator's DatasetCodes that has no
+    dataset metadata gets a placeholder entry (flagged ``Unknown``) so the
+    builder keeps it instead of silently dropping it.
+    """
+    details_map = {d["DatasetCode"]: d for d in dataset_details_list if d.get("DatasetCode")}
+    for item in metadata_items or []:
+        if not isinstance(item, dict):
+            continue
+        codes = item.get("DatasetCodes", [])
+        if not isinstance(codes, list):
+            continue
+        for code in codes:
+            if not isinstance(code, str) or not code or code in details_map:
+                continue
+            details_map[code] = {
+                "DatasetCode": code,
+                "DatasetName": "No metadata available",
+                "Description": "No metadata available for this dataset.",
+                "Unknown": True,
+            }
+    return details_map
 from sspi_flask_app.models.sspi import FastSSPI
 from sspi_flask_app.api.resources.scoring_tasks import (
     start_scoring_job,
@@ -252,7 +278,7 @@ def get_default_structure():
                     dataset["Source"] = {}
                 dataset["Source"]["OrganizationName"] = full_org_name
 
-        all_datasets = {d["DatasetCode"]: d for d in all_datasets_list}
+        all_datasets = build_dataset_details_map(all_datasets_list, metadata_items)
         logger.info(f"Loaded default SSPI structure with {len(metadata_items)} items and {len(all_datasets_list)} datasets")
         return jsonify({
             "success": True,
@@ -444,7 +470,7 @@ def load_configuration(config_id):
                     dataset["Source"] = {}
                 dataset["Source"]["OrganizationName"] = full_org_name
 
-        all_datasets = {d["DatasetCode"]: d for d in all_datasets_list}
+        all_datasets = build_dataset_details_map(all_datasets_list, config["metadata"])
 
         # Check if configuration has been scored (has cached results)
         # Use the stored scored_hash which reflects the filtered metadata used during scoring
@@ -555,7 +581,7 @@ def get_empty_structure():
                     dataset["Source"] = {}
                 dataset["Source"]["OrganizationName"] = full_org_name
 
-        all_datasets = {d["DatasetCode"]: d for d in all_datasets_list}
+        all_datasets = build_dataset_details_map(all_datasets_list, empty_metadata)
 
         logger.info("Returned blank SSPI structure with 3 empty pillar slots")
 
@@ -607,7 +633,7 @@ def get_prebuilt_configuration(config_id):
                     dataset["Source"] = {}
                 dataset["Source"]["OrganizationName"] = full_org_name
 
-        all_datasets = {d["DatasetCode"]: d for d in all_datasets_list}
+        all_datasets = build_dataset_details_map(all_datasets_list, metadata_items)
 
         return jsonify({
             "success": True,
