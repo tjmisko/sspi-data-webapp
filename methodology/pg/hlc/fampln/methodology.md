@@ -15,6 +15,6 @@ IndicatorCode: FAMPLN
 LowerGoalpost: 20
 UpperGoalpost: 100
 ScoreFunction: >
-  Score = goalpost(UNSDG_FAMPLN, 20, 100)
+  Score = goalpost(WHO_FAMPLN, 20, 100)
 ---
 
