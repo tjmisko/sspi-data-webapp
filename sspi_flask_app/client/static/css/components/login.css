@@ -10,11 +10,26 @@
 
 .login-box {
   background-color: var(--box-background-color);
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
+  border: var(--theme-border-thin);
+  border-radius: var(--border-radius);
   padding: 1.75rem;
   max-width: 380px;
   width: 100%;
+  /* width: 100% plus padding overflowed narrow containers without this */
+  box-sizing: border-box;
+}
+
+/* Embedded in the Saved Configurations column on /customize/load: sit
+   flush like the sibling config cards and use the card title size. */
+.config-flex-container .login-box {
+  max-width: none;
+  padding: var(--card-padding);
+}
+
+.config-flex-container .login-title {
+  font-family: var(--header-font-family);
+  font-size: var(--type-section-title-size);
+  font-weight: var(--type-section-title-weight);
 }
 
 .login-title {
