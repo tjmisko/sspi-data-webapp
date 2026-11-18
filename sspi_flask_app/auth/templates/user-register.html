@@ -107,56 +107,6 @@ document.addEventListener('DOMContentLoaded', function() {
     passwordInput.addEventListener('input', checkPasswordMatch);
     confirmPasswordInput.addEventListener('input', checkPasswordMatch);
   }
-
-  // Handle form validation errors on page load
-  const validationErrors = document.querySelector('.validation-errors');
-  if (validationErrors) {
-    const errorItems = validationErrors.querySelectorAll('li');
-    const errorMap = new Map();
-
-    // Map error messages to form fields
-    errorItems.forEach(item => {
-      const text = item.textContent.toLowerCase();
-
-      if (text.includes('username')) {
-        if (!errorMap.has('username')) errorMap.set('username', []);
-        errorMap.get('username').push(item.textContent);
-      } else if (text.includes('email')) {
-        if (!errorMap.has('email')) errorMap.set('email', []);
-        errorMap.get('email').push(item.textContent);
-      } else if (text.includes('password') && !text.includes('confirm')) {
-        if (!errorMap.has('password')) errorMap.set('password', []);
-        errorMap.get('password').push(item.textContent);
-      } else if (text.includes('password') && text.includes('match')) {
-        if (!errorMap.has('confirm_password')) errorMap.set('confirm_password', []);
-        errorMap.get('confirm_password').push(item.textContent);
-      }
-    });
-
-    // Apply error styling and scroll to first error
-    let firstErrorField = null;
-    errorMap.forEach((messages, fieldId) => {
-      const input = document.getElementById(fieldId);
-      const messageSpan = document.getElementById(fieldId + '-message') ||
-                          document.getElementById('password-match-message');
-
-      if (input) {
-        input.className = 'input-invalid';
-        if (!firstErrorField) firstErrorField = input;
-
-        if (messageSpan && messages.length > 0) {
-          messageSpan.textContent = messages[0];
-          messageSpan.className = 'validation-message invalid';
-        }
-      }
-    });
-
-    // Scroll first error into view
-    if (firstErrorField) {
-      firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      firstErrorField.focus();
-    }
-  }
 });
 </script>
 {% endblock %}
@@ -221,6 +171,11 @@ document.addEventListener('DOMContentLoaded', function() {
   text-align: right;
   transition: color 0.15s ease;
   white-space: nowrap;
+}
+
+.validation-message.field-error {
+  text-align: left;
+  white-space: normal;
 }
 
 .validation-message:empty {
@@ -396,27 +351,6 @@ document.addEventListener('DOMContentLoaded', function() {
   text-decoration: underline;
 }
 
-.validation-errors {
-  background-color: color-mix(in srgb, #dc3545 15%, var(--box-background-color));
-  border: 1px solid #dc3545;
-  border-radius: 3px;
-  padding: 0.625rem;
-  margin-bottom: 0.875rem;
-}
-
-.validation-errors ul {
-  font-family: var(--body-font-family);
-  font-size: 0.8rem;
-  color: #dc3545;
-  margin: 0;
-  padding-left: 1.25rem;
-  list-style-type: disc;
-}
-
-.validation-errors li {
-  margin-bottom: 0.125rem;
-}
-
 @media (max-width: 600px) {
   .register-box {
     padding: 1.5rem;
@@ -439,32 +373,23 @@ document.addEventListener('DOMContentLoaded', function() {
       <div class="error-message">{{ error }}</div>
     {% endif %}
 
-    {% if form.errors %}
-      <div class="validation-errors">
-        <ul>
-          {% for field_name, errors in form.errors.items() %}
-            {% for error in errors %}
-              <li>{{ error }}</li>
-            {% endfor %}
-          {% endfor %}
-        </ul>
-      </div>
-    {% endif %}
-
     <form action="" method="POST" class="register-form">
       {{ form.hidden_tag() }}
 
       <div class="form-group">
         <div class="label-row">
           {{ form.username.label }}
-          <span id="username-message" class="validation-message"></span>
+          <span id="username-message" class="validation-message{% if form.username.errors %} invalid{% endif %}">{{ form.username.errors[0] if form.username.errors }}</span>
         </div>
-        {{ form.username(id="username", autofocus=True) }}
+        {{ form.username(id="username", autofocus=True, class="input-invalid" if form.username.errors) }}
       </div>
 
       <div class="form-group">
-        {{ form.email.label }}
-        {{ form.email(id="email") }}
+        <div class="label-row">
+          {{ form.email.label }}
+          <span id="email-message" class="validation-message{% if form.email.errors %} invalid{% endif %}">{{ form.email.errors[0] if form.email.errors }}</span>
+        </div>
+        {{ form.email(id="email", class="input-invalid" if form.email.errors) }}
       </div>
 
       <div class="form-group">
@@ -472,7 +397,8 @@ document.addEventListener('DOMContentLoaded', function() {
           {{ form.password.label }}
           <span class="password-info-icon">i</span>
         </div>
-        {{ form.password(id="password") }}
+        {{ form.password(id="password", class="input-invalid" if form.password.errors) }}
+        <span id="password-message" class="validation-message field-error{% if form.password.errors %} invalid{% endif %}">{{ form.password.errors[0] if form.password.errors }}</span>
         <div class="password-requirements">
           <h4>Password Requirements:</h4>
           <ul>
@@ -488,9 +414,9 @@ document.addEventListener('DOMContentLoaded', function() {
       <div class="form-group">
         <div class="label-row">
           {{ form.confirm_password.label }}
-          <span id="password-match-message" class="validation-message"></span>
+          <span id="password-match-message" class="validation-message{% if form.confirm_password.errors %} invalid{% endif %}">{{ form.confirm_password.errors[0] if form.confirm_password.errors }}</span>
         </div>
-        {{ form.confirm_password(id="confirm_password") }}
+        {{ form.confirm_password(id="confirm_password", class="input-invalid" if form.confirm_password.errors) }}
       </div>
 
       {{ form.submit(class="submit-button") }}

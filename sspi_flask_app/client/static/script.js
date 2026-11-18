@@ -155,7 +155,7 @@ const delta={type:actionType,itemType:itemType};if(itemType==='Indicator'){const
 this.actionHistory.recordAction({type:actionType,message:`Moved\u0020${elementType}\u0020"${elementName}"\u0020from\u0020${fromLocation}\u0020to\u0020${toLocation}`,delta:delta,undo:()=>{if(fromNextSibling&&fromNextSibling.parentNode){fromParent.insertBefore(movedElement,fromNextSibling);}else{fromParent.appendChild(movedElement);}
 this.validate(fromParent);this.validate(toParent);this.markInvalidIndicatorPlacements();this.markInvalidNestedCategories();this.flagUnsaved();},redo:()=>{if(toNextSibling&&toNextSibling.parentNode){toParent.insertBefore(movedElement,toNextSibling);}else{toParent.appendChild(movedElement);}
 this.validate(fromParent);this.validate(toParent);this.markInvalidIndicatorPlacements();this.markInvalidNestedCategories();this.flagUnsaved();}});});this.container.addEventListener('dragover',e=>{const contentEditableEl=e.target.closest('[contenteditable="true"]');if(contentEditableEl&&this.draggedEl){e.stopPropagation();}},true);this.container.addEventListener('drop',e=>{const contentEditableEl=e.target.closest('[contenteditable="true"]');if(contentEditableEl&&this.draggedEl){e.preventDefault();e.stopPropagation();}},true);this.container.addEventListener('contextmenu',e=>{const datasetItem=e.target.closest('.dataset-item');if(datasetItem){e.preventDefault();e.stopPropagation();this.showContextMenu(e.pageX,e.pageY,datasetItem);return;}
-const draggableItem=e.target.closest('.draggable-item');if(!draggableItem)return;const isInDatasetArea=e.target.closest('.selected-datasets, .dataset-selection');if(isInDatasetArea)return;e.preventDefault();this.showContextMenu(e.pageX,e.pageY,draggableItem);});this.container.addEventListener('keydown',e=>{if((e.key==='ContextMenu'||(e.shiftKey&&e.key==='F10'))&&e.target.closest('.draggable-item')){e.preventDefault();const r=e.target.getBoundingClientRect();this.showContextMenu(r.right,r.bottom,e.target);}});this.container.addEventListener('focus',e=>{if(e.target.classList.contains('indicator-name')){const indicatorName=e.target;if(indicatorName.textContent.trim()==='New Indicator'){indicatorName.textContent='';}}},true);this.container.addEventListener('blur',e=>{if(e.target.classList.contains('indicator-name')){const indicatorName=e.target;if(indicatorName.textContent.trim()===''){indicatorName.textContent='New Indicator';}}},true);let editingElement=null;let originalValue=null;this.container.addEventListener('focus',e=>{const editableElement=e.target;if(editableElement.isContentEditable&&(editableElement.classList.contains('indicator-name')||editableElement.classList.contains('customization-category-header-title')||editableElement.classList.contains('pillar-name')||editableElement.classList.contains('editable-score-function'))){editingElement=editableElement;originalValue=editableElement.textContent.trim();}},true);this.container.addEventListener('blur',e=>{const editableElement=e.target;if(editableElement===editingElement&&originalValue!==null){const newValue=editableElement.textContent.trim();if(newValue!==originalValue&&newValue!==''&&originalValue!==''){const capturedOriginalValue=originalValue;const capturedNewValue=newValue;let elementType,actionType,itemCode,message;if(editableElement.classList.contains('indicator-name')){elementType='indicator';actionType='set-indicator-name';const indicatorCard=editableElement.closest('[data-indicator-code]');itemCode=indicatorCard?.dataset.indicatorCode;message=`Changed\u0020indicator\u0020name\u0020from\u0020"${capturedOriginalValue}"\u0020to\u0020"${capturedNewValue}"`;}else if(editableElement.classList.contains('customization-category-header-title')){elementType='category';actionType='set-category-name';const categoryBox=editableElement.closest('[data-category-code]');itemCode=categoryBox?.dataset.categoryCode;message=`Changed\u0020category\u0020name\u0020from\u0020"${capturedOriginalValue}"\u0020to\u0020"${capturedNewValue}"`;}else if(editableElement.classList.contains('pillar-name')){elementType='pillar';actionType='set-pillar-name';const pillarCol=editableElement.closest('[data-pillar-code]');itemCode=pillarCol?.dataset.pillarCode;message=`Changed\u0020pillar\u0020name\u0020from\u0020"${capturedOriginalValue}"\u0020to\u0020"${capturedNewValue}"`;}else if(editableElement.classList.contains('editable-score-function')){elementType='score-function';actionType='set-score-function';const indicatorCard=editableElement.closest('[data-indicator-code]');itemCode=indicatorCard?.dataset.indicatorCode;message=`Changed\u0020score\u0020function\u0020for\u0020indicator\u0020${itemCode||'unknown'}`;console.log('[Score Function Edit] Recording action:',{itemCode,indicatorId:indicatorCard?.id,capturedOriginalValue,capturedNewValue,elementExists:!!editableElement});}else{elementType='item';actionType='rename';itemCode=null;message=`Renamed\u0020${elementType}\u0020from\u0020"${capturedOriginalValue}"\u0020to\u0020"${capturedNewValue}"`;}
+const draggableItem=e.target.closest('.draggable-item');if(!draggableItem)return;const isInDatasetArea=e.target.closest('.selected-datasets, .dataset-selection');if(isInDatasetArea)return;e.preventDefault();this.showContextMenu(e.pageX,e.pageY,draggableItem);});this.container.addEventListener('keydown',e=>{if((e.key==='ContextMenu'||(e.shiftKey&&e.key==='F10'))&&e.target.closest('.draggable-item')){e.preventDefault();const r=e.target.getBoundingClientRect();this.showContextMenu(r.right,r.bottom,e.target);}});this.container.addEventListener('focus',e=>{if(e.target.classList.contains('indicator-name')){const indicatorName=e.target;if(indicatorName.textContent.trim()==='New Indicator'){indicatorName.textContent='';}}},true);this.container.addEventListener('blur',e=>{if(e.target.classList.contains('indicator-name')){const indicatorName=e.target;if(indicatorName.textContent.trim()===''){indicatorName.textContent='New Indicator';}}},true);this.container.addEventListener('input',e=>{const el=e.target;if(!el.classList?.contains('editable-score-function')||!el.dataset.staleDatasetCodes)return;const indicatorEl=el.closest('[data-indicator-code]');if(indicatorEl)this._syncStaleDatasetMarker(el,indicatorEl);});let editingElement=null;let originalValue=null;this.container.addEventListener('focus',e=>{const editableElement=e.target;if(editableElement.isContentEditable&&(editableElement.classList.contains('indicator-name')||editableElement.classList.contains('customization-category-header-title')||editableElement.classList.contains('pillar-name')||editableElement.classList.contains('editable-score-function'))){editingElement=editableElement;originalValue=editableElement.textContent.trim();}},true);this.container.addEventListener('blur',e=>{const editableElement=e.target;if(editableElement===editingElement&&originalValue!==null){const newValue=editableElement.textContent.trim();if(newValue!==originalValue&&newValue!==''&&originalValue!==''){const capturedOriginalValue=originalValue;const capturedNewValue=newValue;let elementType,actionType,itemCode,message;if(editableElement.classList.contains('indicator-name')){elementType='indicator';actionType='set-indicator-name';const indicatorCard=editableElement.closest('[data-indicator-code]');itemCode=indicatorCard?.dataset.indicatorCode;message=`Changed\u0020indicator\u0020name\u0020from\u0020"${capturedOriginalValue}"\u0020to\u0020"${capturedNewValue}"`;}else if(editableElement.classList.contains('customization-category-header-title')){elementType='category';actionType='set-category-name';const categoryBox=editableElement.closest('[data-category-code]');itemCode=categoryBox?.dataset.categoryCode;message=`Changed\u0020category\u0020name\u0020from\u0020"${capturedOriginalValue}"\u0020to\u0020"${capturedNewValue}"`;}else if(editableElement.classList.contains('pillar-name')){elementType='pillar';actionType='set-pillar-name';const pillarCol=editableElement.closest('[data-pillar-code]');itemCode=pillarCol?.dataset.pillarCode;message=`Changed\u0020pillar\u0020name\u0020from\u0020"${capturedOriginalValue}"\u0020to\u0020"${capturedNewValue}"`;}else if(editableElement.classList.contains('editable-score-function')){elementType='score-function';actionType='set-score-function';const indicatorCard=editableElement.closest('[data-indicator-code]');itemCode=indicatorCard?.dataset.indicatorCode;message=`Changed\u0020score\u0020function\u0020for\u0020indicator\u0020${itemCode||'unknown'}`;console.log('[Score Function Edit] Recording action:',{itemCode,indicatorId:indicatorCard?.id,capturedOriginalValue,capturedNewValue,elementExists:!!editableElement});}else{elementType='item';actionType='rename';itemCode=null;message=`Renamed\u0020${elementType}\u0020from\u0020"${capturedOriginalValue}"\u0020to\u0020"${capturedNewValue}"`;}
 const delta={type:actionType,from:capturedOriginalValue,to:capturedNewValue};if(elementType==='indicator'&&itemCode){delta.indicatorCode=itemCode;}else if(elementType==='category'&&itemCode){delta.categoryCode=itemCode;}else if(elementType==='pillar'&&itemCode){delta.pillarCode=itemCode;}else if(elementType==='score-function'&&itemCode){delta.indicatorCode=itemCode;delta.scoreFunction=capturedNewValue;}
 let undoFn,redoFn;if(elementType==='score-function'){const indicatorCard=editableElement.closest('[data-indicator-code]');if(!indicatorCard.id){indicatorCard.id=`indicator-${Math.random().toString(36).substr(2,9)}`;}
 const elementId=indicatorCard.id;console.log('[Score Function] Setup undo/redo:',{itemCode,elementId,hasCode:!!itemCode,hasId:!!elementId});undoFn=()=>{console.log('[Score Function UNDO] Starting:',{itemCode,elementId,capturedOriginalValue});let indicator;if(itemCode){indicator=this.findElementByCode(itemCode,'Indicator');console.log('[Score Function UNDO] Found by code:',!!indicator);}
@@ -199,8 +199,8 @@ getPositionInParent(element){if(!element)return-1;const parent=element.parentEle
 updateElementCode(element,newCode){if(!element||!newCode)return;const itemType=element.dataset.itemType;element.dataset.itemCode=newCode;if(itemType==='Indicator'){element.dataset.indicatorCode=newCode;}else if(itemType==='Category'){element.dataset.categoryCode=newCode;}else if(itemType==='Pillar'){element.dataset.pillarCode=newCode;}}
 _setupDatasetHandlers(datasetItem,selectedDatasetsDiv,indicatorCode,recordRemovalAction){const datasetCode=datasetItem.dataset.datasetCode;const existingExpandHandler=datasetItem._expandHandler;if(!existingExpandHandler){const expandHandler=(e)=>{const isExpanded=datasetItem.dataset.expanded==='true';datasetItem.dataset.expanded=(!isExpanded).toString();const slideout=datasetItem.querySelector('.dataset-details-slideout');if(!isExpanded&&slideout){slideout.style.maxHeight=slideout.scrollHeight+'px';}else if(slideout){slideout.style.maxHeight='0';}};datasetItem.addEventListener('click',expandHandler);datasetItem._expandHandler=expandHandler;}
 const removeBtn=datasetItem.querySelector('.remove-dataset');if(removeBtn){const oldBtn=removeBtn.cloneNode(true);removeBtn.parentNode.replaceChild(oldBtn,removeBtn);oldBtn.addEventListener('click',(e)=>{e.stopPropagation();if(recordRemovalAction){const position=Array.from(selectedDatasetsDiv.children).indexOf(datasetItem);const datasetDetails=this.datasetDetails[datasetCode];this.actionHistory.recordAction({type:'remove-dataset',message:`Removed dataset\u0020${datasetCode}\u0020from indicator\u0020${indicatorCode}`,delta:{type:'remove-dataset',indicatorCode,datasetCode,datasetDetails,position},undo:()=>{const items=Array.from(selectedDatasetsDiv.children);if(position>=items.length){selectedDatasetsDiv.appendChild(datasetItem);}else{selectedDatasetsDiv.insertBefore(datasetItem,items[position]);}
-this._setupDatasetHandlers(datasetItem,selectedDatasetsDiv,indicatorCode,true);this.flagUnsaved();this.validate();},redo:()=>{datasetItem.remove();this.flagUnsaved();this.validate();}});}
-datasetItem.remove();this.flagUnsaved();this.validate();});}}
+this._setupDatasetHandlers(datasetItem,selectedDatasetsDiv,indicatorCode,true);this._syncStaleDatasetMarkerForIndicator(indicatorCode);this.flagUnsaved();this.validate();},redo:()=>{datasetItem.remove();this._flagStaleDatasetReference(indicatorCode,datasetCode,{notify:false});this.flagUnsaved();this.validate();}});}
+datasetItem.remove();this._flagStaleDatasetReference(indicatorCode,datasetCode);this.flagUnsaved();this.validate();});}}
 _addDatasetToIndicatorElement(datasetCode,indicatorElement,indicatorCode,{record=true}={}){const selectedDatasetsDiv=indicatorElement.querySelector('.selected-datasets');if(!selectedDatasetsDiv){return{success:false,error:'Selected datasets container not found'};}
 const existing=selectedDatasetsDiv.querySelector(`[data-dataset-code="${datasetCode}"]`);if(existing){return{success:false,error:'Dataset already added to this indicator'};}
 const details=this.datasetDetails[datasetCode];if(!details){return{success:false,error:`Dataset ${datasetCode}not found in datasetDetails`};}
@@ -213,48 +213,509 @@ addDataset(datasetCode,indicatorCode,{record=true}={}){if(!datasetCode){return{s
 if(!indicatorCode){return{success:false,error:'Indicator code is required'};}
 const indicatorEl=this.findElementByCode(indicatorCode,'Indicator');if(!indicatorEl){return{success:false,error:`Indicator ${indicatorCode}not found`};}
 return this._addDatasetToIndicatorElement(datasetCode,indicatorEl,indicatorCode,{record});}
-removeDataset(datasetCode,indicatorCode){if(!indicatorCode){return{success:false,error:'Indicator code is required'};}
-if(!datasetCode){return{success:false,error:'Dataset code is required'};}
-const indicatorEl=this.findElementByCode(indicatorCode,'Indicator');if(!indicatorEl){return{success:false,error:`Indicator ${indicatorCode}not found`};}
-const selectedDatasetsDiv=indicatorEl.querySelector('.selected-datasets');if(!selectedDatasetsDiv){return{success:false,error:'Selected datasets container not found'};}
-const datasetItem=selectedDatasetsDiv.querySelector(`[data-dataset-code="${datasetCode}"]`);if(!datasetItem){return{success:false,error:`Dataset ${datasetCode}not found in indicator`};}
-const position=Array.from(selectedDatasetsDiv.children).indexOf(datasetItem);const details=this.datasetDetails[datasetCode];datasetItem.remove();const action=this.actionHistory.recordAction({type:'remove-dataset',message:`Removed dataset\u0020${datasetCode}\u0020from indicator\u0020${indicatorCode}`,delta:{type:'remove-dataset',indicatorCode:indicatorCode,datasetCode:datasetCode,datasetDetails:details,position:position},undo:()=>{const siblings=Array.from(selectedDatasetsDiv.children);if(position>=siblings.length){selectedDatasetsDiv.appendChild(datasetItem);}else{selectedDatasetsDiv.insertBefore(datasetItem,siblings[position]);}
-this.validate();},redo:()=>{datasetItem.remove();this.validate();}});this.flagUnsaved();this.validate();return{success:true,action:action};}
-addIndicator(parentCode,{indicatorCode="",indicatorName='New Indicator',datasetCodes=[],scoreFunction='Score = '}={}){if(!parentCode){return{success:false,error:'Parent code is required'};}
-let parentEl=this.findElementByCode(parentCode,'Category');if(!parentEl){parentEl=this.findElementByCode(parentCode,'Pillar');}
-if(!parentEl){return{success:false,error:`Parent ${parentCode}not found`};}
-const parentType=this.getItemType(parentEl);const indicatorsContainer=parentEl.querySelector('.indicators-container');if(!indicatorsContainer){return{success:false,error:'Indicators container not found in parent'};}
-const existing=this.findElementByCode(indicatorCode,'Indicator');if(existing){return{success:false,error:`Indicator code ${indicatorCode}already exists`};}
-const position=indicatorsContainer.querySelectorAll('.indicator-card').length;const indEl=this.createIndicatorElement();const indicatorNameEl=indEl.querySelector('.indicator-name');const indicatorCodeInput=indEl.querySelector('.indicator-code-input');const scoreFunctionEl=indEl.querySelector('.editable-score-function');if(indicatorNameEl)indicatorNameEl.textContent=indicatorName;if(indicatorCodeInput)indicatorCodeInput.value=indicatorCode;if(scoreFunctionEl)scoreFunctionEl.textContent=scoreFunction;indEl.dataset.indicatorCode=indicatorCode;indEl.dataset.itemCode=indicatorCode;if(datasetCodes.length>0){const selectedDatasetsDiv=indEl.querySelector('.selected-datasets');if(selectedDatasetsDiv){datasetCodes.forEach(datasetCode=>{const details=this.datasetDetails[datasetCode];if(details){this.addDataset(datasetCode,indicatorCode,{datasetDetails:details});}});}}
-indicatorsContainer.appendChild(indEl);const indicatorMetadata={ItemType:'Indicator',ItemCode:indicatorCode,ItemName:indicatorName,DatasetCodes:datasetCodes,ScoreFunction:scoreFunction,Children:[]};const action=this.actionHistory.recordAction({type:'add-indicator',message:`Added indicator\u0020${indicatorCode}\u0020to\u0020${parentType}\u0020${parentCode}`,delta:{type:'add-indicator',indicatorCode:indicatorCode,parentCode:parentCode,parentType:parentType,indicatorMetadata:indicatorMetadata,position:position},undo:()=>{indEl.remove();this.validate();},redo:()=>{indicatorsContainer.appendChild(indEl);this.validate();}});this.flagUnsaved();this.validate();return{success:true,action:action,element:indEl};}
-removeIndicator(indicatorCode){if(!indicatorCode){return{success:false,error:'Indicator code is required'};}
-const indEl=this.findElementByCode(indicatorCode,'Indicator');if(!indEl){return{success:false,error:`Indicator ${indicatorCode}not found`};}
-const parentCode=this.getParentCode(indEl);const parentType=this.getParentType(indEl);const position=this.getPositionInParent(indEl);const indicatorNameEl=indEl.querySelector('.indicator-name');const scoreFunctionEl=indEl.querySelector('.editable-score-function');const datasetItems=indEl.querySelectorAll('.dataset-item');const indicatorMetadata={ItemType:'Indicator',ItemCode:indicatorCode,ItemName:indicatorNameEl?.textContent||'',DatasetCodes:Array.from(datasetItems).map(item=>item.dataset.datasetCode),ScoreFunction:scoreFunctionEl?.textContent||'Score = 0',Children:[]};const parentEl=indEl.parentElement;indEl.remove();const action=this.actionHistory.recordAction({type:'remove-indicator',message:`Removed indicator\u0020${indicatorCode}\u0020from\u0020${parentType}\u0020${parentCode}`,delta:{type:'remove-indicator',indicatorCode:indicatorCode,parentCode:parentCode,parentType:parentType,indicatorMetadata:indicatorMetadata,position:position},undo:()=>{const siblings=Array.from(parentEl.children).filter(el=>el.classList.contains('indicator-card'));if(position>=siblings.length){parentEl.appendChild(indEl);}else{parentEl.insertBefore(indEl,siblings[position]);}
-this.validate();},redo:()=>{indEl.remove();this.validate();}});this.flagUnsaved();this.validate();return{success:true,action:action,metadata:indicatorMetadata};}
-moveIndicator(indicatorCode,targetParentCode){if(!indicatorCode){return{success:false,error:'Indicator code is required'};}
-if(!targetParentCode){return{success:false,error:'Target parent code is required'};}
-const indEl=this.findElementByCode(indicatorCode,'Indicator');if(!indEl){return{success:false,error:`Indicator ${indicatorCode}not found`};}
-const fromParentCode=this.getParentCode(indEl);const fromParentType=this.getParentType(indEl);const fromPosition=this.getPositionInParent(indEl);let targetParentEl=this.findElementByCode(targetParentCode,'Category');if(!targetParentEl){targetParentEl=this.findElementByCode(targetParentCode,'Pillar');}
-if(!targetParentEl){return{success:false,error:`Target parent ${targetParentCode}not found`};}
-const toParentType=this.getItemType(targetParentEl);if(fromParentCode===targetParentCode){return{success:false,error:'Indicator is already in target parent'};}
-const targetContainer=targetParentEl.querySelector('.indicators-container');if(!targetContainer){return{success:false,error:'Indicators container not found in target parent'};}
-const toPosition=targetContainer.querySelectorAll('.indicator-card').length;const fromParentEl=indEl.parentElement;targetContainer.appendChild(indEl);const action=this.actionHistory.recordAction({type:'move-indicator',message:`Moved indicator\u0020${indicatorCode}\u0020from ${fromParentType}\u0020${fromParentCode}\u0020to\u0020${toParentType}"${targetParentCode}"`,delta:{type:'move-indicator',indicatorCode:indicatorCode,fromParentCode:fromParentCode,fromParentType:fromParentType,fromPosition:fromPosition,toParentCode:targetParentCode,toParentType:toParentType,toPosition:toPosition},undo:()=>{const siblings=Array.from(fromParentEl.children).filter(el=>el.classList.contains('indicator-card'));if(fromPosition>=siblings.length){fromParentEl.appendChild(indEl);}else{fromParentEl.insertBefore(indEl,siblings[fromPosition]);}
-this.validate();},redo:()=>{targetContainer.appendChild(indEl);this.validate();}});this.flagUnsaved();this.validate();return{success:true,action:action};}
-modifyIndicator(indicatorCode,{newIndicatorCode,indicatorName,scoreFunction,datasetCodes,record=true}={}){if(newIndicatorCode===undefined&&indicatorName===undefined&&scoreFunction===undefined&&datasetCodes===undefined){return{success:false,error:'No changes specified'};}
-const indicatorEl=this.findElementByCode(indicatorCode,'Indicator');if(!indicatorEl){return{success:false,error:`Indicator ${indicatorCode}not found`};}
-if(!indicatorEl.id){indicatorEl.id=`indicator-${Math.random().toString(36).substr(2,9)}`;}
-const elementId=indicatorEl.id;const actions=[];let currentCode=indicatorCode;if(newIndicatorCode!==undefined){if(!this.validateCode(newIndicatorCode,'indicator')){return{success:false,error:`Invalid indicator code format:${newIndicatorCode}(must be 6 uppercase letters/numbers)`};}
-const codeInput=indicatorEl.querySelector('.indicator-code-input');if(!this.isCodeUnique(newIndicatorCode,'indicator',codeInput)){return{success:false,error:`Code"${newIndicatorCode}"is already in use`};}
-const oldCode=indicatorEl.dataset.indicatorCode||'';if(oldCode!==newIndicatorCode){this.updateElementCode(indicatorEl,newIndicatorCode);if(codeInput){codeInput.value=newIndicatorCode;}
-if(record){const action=this.actionHistory.recordAction({type:'modify-indicator',subtype:'set-code',message:oldCode?`Changed indicator code from"${oldCode}"to"${newIndicatorCode}"`:`Set indicator code to"${newIndicatorCode}"`,delta:{type:'set-code',indicatorCode:newIndicatorCode,from:oldCode,to:newIndicatorCode},undo:()=>{const el=document.getElementById(elementId);if(el){this.updateElementCode(el,oldCode);const input=el.querySelector('.indicator-code-input');if(input)input.value=oldCode;this.validate();}},redo:()=>{const el=document.getElementById(elementId);if(el){this.updateElementCode(el,newIndicatorCode);const input=el.querySelector('.indicator-code-input');if(input)input.value=newIndicatorCode;this.validate();}}});actions.push(action);}
-currentCode=newIndicatorCode;}}
-if(indicatorName!==undefined){const indicatorNameEl=indicatorEl.querySelector('.indicator-name');if(!indicatorNameEl){return{success:false,error:'Indicator name element not found'};}
-const oldName=indicatorNameEl.textContent.trim();if(oldName!==indicatorName){indicatorNameEl.textContent=indicatorName;if(record){const action=this.actionHistory.recordAction({type:'modify-indicator',subtype:'set-name',message:`Changed indicator name from"${oldName}"to"${indicatorName}"`,delta:{type:'set-name',indicatorCode:currentCode,from:oldName,to:indicatorName},undo:()=>{const el=document.getElementById(elementId);if(el){const nameEl=el.querySelector('.indicator-name');if(nameEl)nameEl.textContent=oldName;}},redo:()=>{const el=document.getElementById(elementId);if(el){const nameEl=el.querySelector('.indicator-name');if(nameEl)nameEl.textContent=indicatorName;}}});actions.push(action);}}}
-if(scoreFunction!==undefined){const scoreFunctionEl=indicatorEl.querySelector('.editable-score-function');if(!scoreFunctionEl){return{success:false,error:'Score function element not found'};}
-const oldScoreFunction=scoreFunctionEl.textContent.trim();if(oldScoreFunction!==scoreFunction){scoreFunctionEl.textContent=scoreFunction;if(record){const action=this.actionHistory.recordAction({type:'modify-indicator',subtype:'set-score-function',message:`Updated score function for indicator"${currentCode}"`,delta:{type:'set-score-function',indicatorCode:currentCode,from:oldScoreFunction,to:scoreFunction},undo:()=>{const el=document.getElementById(elementId);if(el){const sfEl=el.querySelector('.editable-score-function');if(sfEl)sfEl.textContent=oldScoreFunction;this.validate();}},redo:()=>{const el=document.getElementById(elementId);if(el){const sfEl=el.querySelector('.editable-score-function');if(sfEl)sfEl.textContent=scoreFunction;this.validate();}}});actions.push(action);}}}
-if(datasetCodes!==undefined){if(!Array.isArray(datasetCodes)){return{success:false,error:'datasetCodes must be an array'};}
-const selectedDatasetsDiv=indicatorEl.querySelector('.selected-datasets');if(!selectedDatasetsDiv){return{success:false,error:'Selected datasets container not found'};}
-const currentDatasetItems=Array.from(selectedDatasetsDiv.querySelectorAll('.dataset-item'));const currentDatasetCodes=currentDatasetItems.map(item=>item.dataset.datasetCode);const hasChanged=JSON.stringify(currentDatasetCodes.sort())!==JSON.stringify([...datasetCodes].sort());if(hasChanged){const oldDatasetsHTML=selectedDatasetsDiv.innerHTML;currentDatasetItems.forEach(item=>item.remove());const newDatasetElements=[];for(const datasetCode of datasetCodes){const datasetDetails=this.datasetDetails[datasetCode];if(!datasetDetails){console.warn(`Dataset ${datasetCode}not found in datasetDetails`);continue;}
+_flagStaleDatasetReference(indicatorCode,datasetCode,{notify=true}={}){const indicatorEl=this.findElementByCode(indicatorCode,'Indicator');const scoreFunctionEl=indicatorEl?.querySelector('.editable-score-function');if(!scoreFunctionEl)return;if(!this._scoreFunctionReferencesCode(scoreFunctionEl,datasetCode))return;const codes=new Set((scoreFunctionEl.dataset.staleDatasetCodes||'').split(',').filter(Boolean));codes.add(datasetCode);scoreFunctionEl.dataset.staleDatasetCodes=Array.from(codes).join(',');this._syncStaleDatasetMarker(scoreFunctionEl,indicatorEl);if(notify){notifications.warning(`The score function for ${indicatorCode}still uses ${datasetCode},which is no longer in its dataset list.Edit the score function.`,8000);}}
+_scoreFunctionReferencesCode(scoreFunctionEl,code){const escaped=code.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');return new RegExp(`(^|[^A-Za-z0-9_])${escaped}([^A-Za-z0-9_]|$)`).test(scoreFunctionEl.textContent);}
+_syncStaleDatasetMarker(scoreFunctionEl,indicatorEl){const stored=(scoreFunctionEl.dataset.staleDatasetCodes||'').split(',').filter(Boolean);if(stored.length===0)return;const stale=stored.filter(code=>!indicatorEl.querySelector(`.selected-datasets[data-dataset-code="${code}"]`)&&this._scoreFunctionReferencesCode(scoreFunctionEl,code));if(stale.length===0){delete scoreFunctionEl.dataset.staleDatasetCodes;scoreFunctionEl.classList.remove('score-function-invalid');scoreFunctionEl.style.outline='';scoreFunctionEl.removeAttribute('title');return;}
+scoreFunctionEl.dataset.staleDatasetCodes=stale.join(',');scoreFunctionEl.classList.add('score-function-invalid');scoreFunctionEl.style.outline='2px solid var(--color-error, #d33)';scoreFunctionEl.title=`Score function references ${stale.join(', ')},which ${stale.length>1?'are':'is'}no longer in this indicator's dataset list. Edit the formula or restore the dataset.`;
+    }
+
+    /** Re-sync the stale marker for an indicator (after undo/redo). @private */
+    _syncStaleDatasetMarkerForIndicator(indicatorCode) {
+        const indicatorEl = this.findElementByCode(indicatorCode, 'Indicator');
+        const scoreFunctionEl = indicatorEl?.querySelector('.editable-score-function');
+        if (scoreFunctionEl) this._syncStaleDatasetMarker(scoreFunctionEl, indicatorEl);
+    }
+
+    /**
+     * Remove dataset from an indicator
+     * @param {string} indicatorCode - The indicator code
+     * @param {Object} options - Options object
+     * @param {string} options.datasetCode - The dataset code to remove
+     * @returns {Object} Result with success status and action
+     */
+    removeDataset(datasetCode, indicatorCode) {
+        if (!indicatorCode) {
+            return { success: false, error: 'Indicator code is required' };
+        }
+        if (!datasetCode) {
+            return { success: false, error: 'Dataset code is required' };
+        }
+        const indicatorEl = this.findElementByCode(indicatorCode, 'Indicator');
+        if (!indicatorEl) {
+            return { success: false, error: `Indicator ${indicatorCode} not found` };
+        }
+        const selectedDatasetsDiv = indicatorEl.querySelector('.selected-datasets');
+        if (!selectedDatasetsDiv) {
+            return { success: false, error: 'Selected datasets container not found' };
+        }
+        const datasetItem = selectedDatasetsDiv.querySelector(`[data-dataset-code="${datasetCode}"]`);
+        if (!datasetItem) {
+            return { success: false, error: `Dataset ${datasetCode} not found in indicator` };
+        }
+        const position = Array.from(selectedDatasetsDiv.children).indexOf(datasetItem);
+        const details = this.datasetDetails[datasetCode];
+        datasetItem.remove();
+        const action = this.actionHistory.recordAction({
+            type: 'remove-dataset',
+            message: `Removed dataset\u0020${datasetCode}\u0020from indicator\u0020${indicatorCode}`,
+            delta: {
+                type: 'remove-dataset',
+                indicatorCode: indicatorCode,
+                datasetCode: datasetCode,
+                datasetDetails: details,
+                position: position
+            },
+            undo: () => {
+                // Re-add at same position
+                const siblings = Array.from(selectedDatasetsDiv.children);
+                if (position >= siblings.length) {
+                    selectedDatasetsDiv.appendChild(datasetItem);
+                } else {
+                    selectedDatasetsDiv.insertBefore(datasetItem, siblings[position]);
+                }
+                this._syncStaleDatasetMarkerForIndicator(indicatorCode);
+                this.validate();
+            },
+            redo: () => {
+                datasetItem.remove();
+                this._flagStaleDatasetReference(indicatorCode, datasetCode, { notify: false });
+                this.validate();
+            }
+        });
+        this._flagStaleDatasetReference(indicatorCode, datasetCode);
+        this.flagUnsaved();
+        this.validate();
+        return { success: true, action: action };
+    }
+
+    /**
+     * Add new indicator to a category or pillar
+     * @param {string} parentCode - The parent category or pillar code
+     * @param {Object} options - Options object
+     * @param {string} options.indicatorCode - The indicator code (required)
+     * @param {string} options.indicatorName - The indicator name (optional, defaults to "New Indicator")
+     * @param {Array<string>} options.datasetCodes - Array of dataset codes (optional, defaults to [])
+     * @param {string} options.scoreFunction - The score function (optional, defaults to "Score = 0")
+     * @returns {Object} Result with success, action, and element
+     */
+    addIndicator(parentCode, { indicatorCode = "", indicatorName = 'New Indicator', datasetCodes = [], scoreFunction = 'Score=' } = {}) {
+        if (!parentCode) {
+            return { success: false, error: 'Parent code is required' };
+        }
+        let parentEl = this.findElementByCode(parentCode, 'Category');
+        if (!parentEl) {
+            parentEl = this.findElementByCode(parentCode, 'Pillar');
+        }
+        if (!parentEl) {
+            return { success: false, error: `Parent ${parentCode} not found` };
+        }
+        const parentType = this.getItemType(parentEl);
+        const indicatorsContainer = parentEl.querySelector('.indicators-container');
+        if (!indicatorsContainer) {
+            return { success: false, error: 'Indicators container not found in parent' };
+        }
+        const existing = this.findElementByCode(indicatorCode, 'Indicator');
+        if (existing) {
+            return { success: false, error: `Indicator code ${indicatorCode} already exists` };
+        }
+        const position = indicatorsContainer.querySelectorAll('.indicator-card').length;
+        const indEl = this.createIndicatorElement();
+        const indicatorNameEl = indEl.querySelector('.indicator-name');
+        const indicatorCodeInput = indEl.querySelector('.indicator-code-input');
+        const scoreFunctionEl = indEl.querySelector('.editable-score-function');
+        if (indicatorNameEl) indicatorNameEl.textContent = indicatorName;
+        if (indicatorCodeInput) indicatorCodeInput.value = indicatorCode;
+        if (scoreFunctionEl) scoreFunctionEl.textContent = scoreFunction;
+        indEl.dataset.indicatorCode = indicatorCode;
+        indEl.dataset.itemCode = indicatorCode;
+        if (datasetCodes.length > 0) {
+            const selectedDatasetsDiv = indEl.querySelector('.selected-datasets');
+            if (selectedDatasetsDiv) {
+                datasetCodes.forEach(datasetCode => {
+                    const details = this.datasetDetails[datasetCode];
+                    if (details) {
+                        this.addDataset(datasetCode, indicatorCode, {datasetDetails: details });
+                    }
+                });
+            }
+        }
+        indicatorsContainer.appendChild(indEl);
+        const indicatorMetadata = {
+            ItemType: 'Indicator',
+            ItemCode: indicatorCode,
+            ItemName: indicatorName,
+            DatasetCodes: datasetCodes,
+            ScoreFunction: scoreFunction,
+            Children: []
+        };
+        const action = this.actionHistory.recordAction({
+            type: 'add-indicator',
+            message: `Added indicator\u0020${indicatorCode}\u0020to\u0020${parentType}\u0020${parentCode}`,
+            delta: {
+                type: 'add-indicator',
+                indicatorCode: indicatorCode,
+                parentCode: parentCode,
+                parentType: parentType,
+                indicatorMetadata: indicatorMetadata,
+                position: position
+            },
+            undo: () => {
+                indEl.remove();
+                this.validate();
+            },
+            redo: () => {
+                indicatorsContainer.appendChild(indEl);
+                this.validate();
+            }
+        });
+        this.flagUnsaved();
+        this.validate();
+        return { success: true, action: action, element: indEl };
+    }
+
+    /**
+     * Remove indicator
+     * @param {string} indicatorCode - The indicator code
+     * @returns {Object} Result with success, action, and metadata
+     */
+    removeIndicator(indicatorCode) {
+        if (!indicatorCode) {
+            return { success: false, error: 'Indicator code is required' };
+        }
+        const indEl = this.findElementByCode(indicatorCode, 'Indicator');
+        if (!indEl) {
+            return { success: false, error: `Indicator ${indicatorCode} not found` };
+        }
+        const parentCode = this.getParentCode(indEl);
+        const parentType = this.getParentType(indEl);
+        const position = this.getPositionInParent(indEl);
+        const indicatorNameEl = indEl.querySelector('.indicator-name');
+        const scoreFunctionEl = indEl.querySelector('.editable-score-function');
+        const datasetItems = indEl.querySelectorAll('.dataset-item');
+        const indicatorMetadata = {
+            ItemType: 'Indicator',
+            ItemCode: indicatorCode,
+            ItemName: indicatorNameEl?.textContent || '',
+            DatasetCodes: Array.from(datasetItems).map(item => item.dataset.datasetCode),
+            ScoreFunction: scoreFunctionEl?.textContent || 'Score=0',
+            Children: []
+        };
+        const parentEl = indEl.parentElement;
+        indEl.remove();
+        const action = this.actionHistory.recordAction({
+            type: 'remove-indicator',
+            message: `Removed indicator\u0020${indicatorCode}\u0020from\u0020${parentType}\u0020${parentCode}`,
+            delta: {
+                type: 'remove-indicator',
+                indicatorCode: indicatorCode,
+                parentCode: parentCode,
+                parentType: parentType,
+                indicatorMetadata: indicatorMetadata,
+                position: position
+            },
+            undo: () => {
+                // Re-add at same position
+                const siblings = Array.from(parentEl.children).filter(el => el.classList.contains('indicator-card'));
+                if (position >= siblings.length) {
+                    parentEl.appendChild(indEl);
+                } else {
+                    parentEl.insertBefore(indEl, siblings[position]);
+                }
+                this.validate();
+            },
+            redo: () => {
+                indEl.remove();
+                this.validate();
+            }
+        });
+        // Flag unsaved and validate
+        this.flagUnsaved();
+        this.validate();
+        return { success: true, action: action, metadata: indicatorMetadata };
+    }
+
+    /**
+     * Move indicator to different category or pillar
+     * @param {string} indicatorCode - The indicator code
+     * @param {string} targetParentCode - The target parent code (category or pillar)
+     * @returns {Object} Result with success and action
+     */
+    moveIndicator(indicatorCode, targetParentCode) {
+        if (!indicatorCode) {
+            return { success: false, error: 'Indicator code is required' };
+        }
+        if (!targetParentCode) {
+            return { success: false, error: 'Target parent code is required' };
+        }
+        const indEl = this.findElementByCode(indicatorCode, 'Indicator');
+        if (!indEl) {
+            return { success: false, error: `Indicator ${indicatorCode} not found` };
+        }
+        const fromParentCode = this.getParentCode(indEl);
+        const fromParentType = this.getParentType(indEl);
+        const fromPosition = this.getPositionInParent(indEl);
+        let targetParentEl = this.findElementByCode(targetParentCode, 'Category');
+        if (!targetParentEl) {
+            targetParentEl = this.findElementByCode(targetParentCode, 'Pillar');
+        }
+        if (!targetParentEl) {
+            return { success: false, error: `Target parent ${targetParentCode} not found` };
+        }
+        const toParentType = this.getItemType(targetParentEl);
+        if (fromParentCode === targetParentCode) {
+            return { success: false, error: 'Indicator is already in target parent' };
+        }
+        const targetContainer = targetParentEl.querySelector('.indicators-container');
+        if (!targetContainer) {
+            return { success: false, error: 'Indicators container not found in target parent' };
+        }
+        const toPosition = targetContainer.querySelectorAll('.indicator-card').length;
+        const fromParentEl = indEl.parentElement;
+        targetContainer.appendChild(indEl);
+        const action = this.actionHistory.recordAction({
+            type: 'move-indicator',
+            message: `Moved indicator\u0020${indicatorCode}\u0020from ${fromParentType}\u0020${fromParentCode}\u0020to\u0020${toParentType} "${targetParentCode}"`,
+            delta: {
+                type: 'move-indicator',
+                indicatorCode: indicatorCode,
+                fromParentCode: fromParentCode,
+                fromParentType: fromParentType,
+                fromPosition: fromPosition,
+                toParentCode: targetParentCode,
+                toParentType: toParentType,
+                toPosition: toPosition
+            },
+            undo: () => {
+                // Move back to original position
+                const siblings = Array.from(fromParentEl.children).filter(el => el.classList.contains('indicator-card'));
+                if (fromPosition >= siblings.length) {
+                    fromParentEl.appendChild(indEl);
+                } else {
+                    fromParentEl.insertBefore(indEl, siblings[fromPosition]);
+                }
+                this.validate();
+            },
+            redo: () => {
+                targetContainer.appendChild(indEl);
+                this.validate();
+            }
+        });
+        this.flagUnsaved();
+        this.validate();
+        return { success: true, action: action };
+    }
+
+    /**
+     * Set indicator name
+     * @param {string} indicatorCode - The indicator code
+     * @param {Object} options - Options object
+     * @param {string} options.indicatorName - The new indicator name
+     * @returns {Object} Result with success and action
+     */
+    /**
+     * Modify multiple properties of an indicator in a single call
+     * Records separate actions for each property changed (granular undo/redo)
+     * @param {string} indicatorCode - The indicator code to modify
+     * @param {Object} changes - Object containing properties to change
+     * @param {string} [changes.newIndicatorCode] - New indicator code
+     * @param {string} [changes.indicatorName] - New indicator name
+     * @param {string} [changes.scoreFunction] - New score function
+     * @param {Array<string>} [changes.datasetCodes] - Array of dataset codes (replaces all existing)
+     * @param {boolean} [changes.record=true] - Whether to record actions
+     * @returns {Object} Result with success status, actions array, and error if applicable
+     */
+    modifyIndicator(indicatorCode, { newIndicatorCode, indicatorName, scoreFunction, datasetCodes, record = true } = {}) {
+        // Validate at least one change is specified
+        if (newIndicatorCode === undefined && indicatorName === undefined &&
+            scoreFunction === undefined && datasetCodes === undefined) {
+            return { success: false, error: 'No changes specified' };
+        }
+
+        // Find indicator element
+        const indicatorEl = this.findElementByCode(indicatorCode, 'Indicator');
+        if (!indicatorEl) {
+            return { success: false, error: `Indicator ${indicatorCode} not found` };
+        }
+
+        // Ensure element has stable ID for undo/redo
+        if (!indicatorEl.id) {
+            indicatorEl.id = `indicator-${Math.random().toString(36).substr(2,9)}`;
+        }
+        const elementId = indicatorEl.id;
+
+        const actions = [];
+        let currentCode = indicatorCode; // Track code changes for subsequent operations
+
+        // 1. Handle indicator code change
+        if (newIndicatorCode !== undefined) {
+            // Validate new code
+            if (!this.validateCode(newIndicatorCode, 'indicator')) {
+                return { success: false, error: `Invalid indicator code format: ${newIndicatorCode} (must be 6 uppercase letters/numbers)` };
+            }
+
+            const codeInput = indicatorEl.querySelector('.indicator-code-input');
+            if (!this.isCodeUnique(newIndicatorCode, 'indicator', codeInput)) {
+                return { success: false, error: `Code "${newIndicatorCode}" is already in use` };
+            }
+
+            const oldCode = indicatorEl.dataset.indicatorCode || '';
+
+            if (oldCode !== newIndicatorCode) {
+                // Update DOM
+                this.updateElementCode(indicatorEl, newIndicatorCode);
+                if (codeInput) {
+                    codeInput.value = newIndicatorCode;
+                }
+
+                // Record action
+                if (record) {
+                    const action = this.actionHistory.recordAction({
+                        type: 'modify-indicator',
+                        subtype: 'set-code',
+                        message: oldCode
+                            ? `Changed indicator code from "${oldCode}" to "${newIndicatorCode}"`
+                            : `Set indicator code to "${newIndicatorCode}"`,
+                        delta: {
+                            type: 'set-code',
+                            indicatorCode: newIndicatorCode,
+                            from: oldCode,
+                            to: newIndicatorCode
+                        },
+                        undo: () => {
+                            const el = document.getElementById(elementId);
+                            if (el) {
+                                this.updateElementCode(el, oldCode);
+                                const input = el.querySelector('.indicator-code-input');
+                                if (input) input.value = oldCode;
+                                this.validate();
+                            }
+                        },
+                        redo: () => {
+                            const el = document.getElementById(elementId);
+                            if (el) {
+                                this.updateElementCode(el, newIndicatorCode);
+                                const input = el.querySelector('.indicator-code-input');
+                                if (input) input.value = newIndicatorCode;
+                                this.validate();
+                            }
+                        }
+                    });
+                    actions.push(action);
+                }
+
+                currentCode = newIndicatorCode; // Update for subsequent operations
+            }
+        }
+
+        // 2. Handle indicator name change
+        if (indicatorName !== undefined) {
+            const indicatorNameEl = indicatorEl.querySelector('.indicator-name');
+            if (!indicatorNameEl) {
+                return { success: false, error: 'Indicator name element not found' };
+            }
+
+            const oldName = indicatorNameEl.textContent.trim();
+
+            if (oldName !== indicatorName) {
+                // Update DOM
+                indicatorNameEl.textContent = indicatorName;
+
+                // Record action
+                if (record) {
+                    const action = this.actionHistory.recordAction({
+                        type: 'modify-indicator',
+                        subtype: 'set-name',
+                        message: `Changed indicator name from "${oldName}" to "${indicatorName}"`,
+                        delta: {
+                            type: 'set-name',
+                            indicatorCode: currentCode,
+                            from: oldName,
+                            to: indicatorName
+                        },
+                        undo: () => {
+                            const el = document.getElementById(elementId);
+                            if (el) {
+                                const nameEl = el.querySelector('.indicator-name');
+                                if (nameEl) nameEl.textContent = oldName;
+                            }
+                        },
+                        redo: () => {
+                            const el = document.getElementById(elementId);
+                            if (el) {
+                                const nameEl = el.querySelector('.indicator-name');
+                                if (nameEl) nameEl.textContent = indicatorName;
+                            }
+                        }
+                    });
+                    actions.push(action);
+                }
+            }
+        }
+
+        // 3. Handle score function change
+        if (scoreFunction !== undefined) {
+            const scoreFunctionEl = indicatorEl.querySelector('.editable-score-function');
+            if (!scoreFunctionEl) {
+                return { success: false, error: 'Score function element not found' };
+            }
+
+            const oldScoreFunction = scoreFunctionEl.textContent.trim();
+
+            if (oldScoreFunction !== scoreFunction) {
+                // Update DOM
+                scoreFunctionEl.textContent = scoreFunction;
+
+                // Record action
+                if (record) {
+                    const action = this.actionHistory.recordAction({
+                        type: 'modify-indicator',
+                        subtype: 'set-score-function',
+                        message: `Updated score function for indicator "${currentCode}"`,
+                        delta: {
+                            type: 'set-score-function',
+                            indicatorCode: currentCode,
+                            from: oldScoreFunction,
+                            to: scoreFunction
+                        },
+                        undo: () => {
+                            const el = document.getElementById(elementId);
+                            if (el) {
+                                const sfEl = el.querySelector('.editable-score-function');
+                                if (sfEl) sfEl.textContent = oldScoreFunction;
+                                this.validate();
+                            }
+                        },
+                        redo: () => {
+                            const el = document.getElementById(elementId);
+                            if (el) {
+                                const sfEl = el.querySelector('.editable-score-function');
+                                if (sfEl) sfEl.textContent = scoreFunction;
+                                this.validate();
+                            }
+                        }
+                    });
+                    actions.push(action);
+                }
+            }
+        }
+
+        // 4. Handle dataset replacement
+        if (datasetCodes !== undefined) {
+            if (!Array.isArray(datasetCodes)) {
+                return { success: false, error: 'datasetCodes must be an array' };
+            }
+
+            const selectedDatasetsDiv = indicatorEl.querySelector('.selected-datasets');
+            if (!selectedDatasetsDiv) {
+                return { success: false, error: 'Selected datasets container not found' };
+            }
+
+            // Get current datasets
+            const currentDatasetItems = Array.from(selectedDatasetsDiv.querySelectorAll('.dataset-item'));
+            const currentDatasetCodes = currentDatasetItems.map(item => item.dataset.datasetCode);
+
+            // Only proceed if there's a difference
+const hasChanged=JSON.stringify(currentDatasetCodes.sort())!==JSON.stringify([...datasetCodes].sort());if(hasChanged){const oldDatasetsHTML=selectedDatasetsDiv.innerHTML;currentDatasetItems.forEach(item=>item.remove());const newDatasetElements=[];for(const datasetCode of datasetCodes){const datasetDetails=this.datasetDetails[datasetCode];if(!datasetDetails){console.warn(`Dataset ${datasetCode}not found in datasetDetails`);continue;}
 const result=this.addDataset(datasetCode,currentCode,{datasetDetails,record:false});if(result.success&&result.element){newDatasetElements.push(result.element);}}
 if(record){const action=this.actionHistory.recordAction({type:'modify-indicator',subtype:'replace-datasets',message:`Replaced datasets for indicator"${currentCode}"(${datasetCodes.length}datasets)`,delta:{type:'replace-datasets',indicatorCode:currentCode,from:currentDatasetCodes,to:datasetCodes},undo:()=>{const el=document.getElementById(elementId);if(el){const dsDiv=el.querySelector('.selected-datasets');if(dsDiv){dsDiv.innerHTML=oldDatasetsHTML;dsDiv.querySelectorAll('.dataset-item').forEach(item=>{this._setupDatasetHandlers(item,dsDiv,currentCode,true);});}
 this.validate();}},redo:()=>{const el=document.getElementById(elementId);if(el){const dsDiv=el.querySelector('.selected-datasets');if(dsDiv){Array.from(dsDiv.children).forEach(child=>child.remove());newDatasetElements.forEach(dsEl=>{dsDiv.appendChild(dsEl.cloneNode(true));});dsDiv.querySelectorAll('.dataset-item').forEach(item=>{this._setupDatasetHandlers(item,dsDiv,currentCode,true);});}
@@ -2896,8 +3357,8 @@ class CustomSSPIPanelChart extends PanelChart{constructor(parentElement,itemCode
 static buildCustomURL(itemCode,configHash,configId){const params=new URLSearchParams();if(configHash){params.set('config_hash',configHash);}
 if(configId){params.set('config_id',configId);}
 const queryString=params.toString();return`/api/v1/customize/panel/score/${itemCode}${queryString?`?${queryString}`:''}`;}
-initItemTree(){this.itemTree=document.createElement('div');this.itemTree.classList.add('custom-sspi-tree-container');this.itemTree.innerHTML=`<div class="custom-sspi-tree-description"><h3 class="custom-sspi-tree-header">Custom SSPI Structure</h3><p class="custom-sspi-tree-description-text">Explore the scores across your custom SSPI structure below.Click on an item to view its data.</p></div><div class="item-tree-content"></div>`;}
-initRoot(){this.initItemTree();this.root=document.createElement('div');this.root.classList.add('custom-panel-chart-root-container');this.root.appendChild(this.itemTree);this.parentElement.appendChild(this.root);}
+initItemTree(){this.itemTree=document.createElement('div');this.itemTree.classList.add('sspi-tree-container','custom-sspi-tree-container');this.itemTree.innerHTML=`<div class="sspi-tree-description custom-sspi-tree-description"><h3 class="sspi-tree-header custom-sspi-tree-header">Custom SSPI Structure</h3><p class="sspi-tree-description-text custom-sspi-tree-description-text">Explore the scores across your custom SSPI structure below.Click on an item to view its data.</p></div><div class="item-tree-content"></div>`;}
+initRoot(){this.initItemTree();this.root=document.createElement('div');this.root.classList.add('panel-chart-root-container','custom-panel-chart-root-container');this.root.appendChild(this.itemTree);this.parentElement.appendChild(this.root);}
 rigItemDropdown(){this.itemInformation=this.chartOptions.querySelector('.item-information');this.itemDropdown=this.itemInformation.querySelector('.item-dropdown');this.itemDropdown.style.display="none";}
 updateItemDropdown(options,itemType){let itemTypeCapped;const resolvedType=itemType||this.itemType||'';if(resolvedType==="sspi"||resolvedType==="SSPI"){itemTypeCapped=resolvedType.toUpperCase();}else{itemTypeCapped=resolvedType.charAt(0).toUpperCase()+resolvedType.slice(1);}
 const itemSummary=this.itemInformation.querySelector('.item-information-summary');if(itemSummary){itemSummary.textContent=`${itemTypeCapped}Information`;}}

@@ -395,6 +395,33 @@ class TestRoleBoundaries:
         assert response.status_code == 200
         assert User.find_by_username('mismatch_user') is None
 
+    def test_register_should_show_email_error_on_email_field_when_email_invalid(self, app, client, mock_auth_data):
+        response = client.post('/register', data={
+            'username': 'bad_email_user',
+            'email': 'not-an-email',
+            'password': 'Str0ng!Pass',
+            'confirm_password': 'Str0ng!Pass',
+        })
+        assert response.status_code == 200
+        soup = BeautifulSoup(response.data, 'html.parser')
+        message = "Please enter a valid email address."
+        assert message in soup.find(id='email-message').get_text()
+        assert soup.find(id='password-match-message').get_text().strip() == ''
+        assert soup.find(id='password-message').get_text().strip() == ''
+        assert soup.find(id='username-message').get_text().strip() == ''
+        assert response.get_data(as_text=True).count(message) == 1
+
+    def test_register_should_show_only_mismatch_error_on_confirm_field_when_passwords_differ(self, app, client, mock_auth_data):
+        response = client.post('/register', data={
+            'username': 'mismatch_user2',
+            'email': 'mismatch_user2@example.com',
+            'password': 'Str0ng!Pass',
+            'confirm_password': 'Str0ng!Pass2',
+        })
+        soup = BeautifulSoup(response.data, 'html.parser')
+        assert "Passwords must match!" in soup.find(id='password-match-message').get_text()
+        assert soup.find(id='email-message').get_text().strip() == ''
+
     def test_register_admin_should_return_401_when_anonymous(self, app, client, mock_auth_data):
         assert client.get('/auth/register-admin').status_code == 401
         assert client.post('/auth/register-admin').status_code == 401
