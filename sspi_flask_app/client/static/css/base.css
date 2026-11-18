@@ -22,7 +22,7 @@ button, input, select, textarea {
 }
 
 main {
-  padding: 1em 3vw;
+  padding: var(--page-top-padding) 3vw 1em;
   flex: 1;
 }
 
@@ -30,25 +30,111 @@ h1, h2, h3, h4, h5, h6 {
   margin: 0.15em 0;
 }
 
-h1 {
+/* Heading scale: the element defaults and the matching utility classes read
+   the same tokens, so a non-heading element can carry a title style. */
+h1, .page-title {
   font-family: var(--title-font-family, sans-serif);
   font-weight: var(--title-weight, 300);
-  font-size: 2rem;
+  font-size: var(--type-page-title-size);
   line-height: 1.15;
 }
 
-h2 {
+h2, .section-title {
   font-family: var(--header-font-family, sans-serif);
-  font-weight: 400;
-  font-size: 1.5rem;
+  font-weight: var(--type-section-title-weight);
+  font-size: var(--type-section-title-size);
   line-height: 1.3;
 }
 
-h3 {
+h3, .subsection-title {
   font-family: var(--header-font-family, sans-serif);
-  font-weight: 500;
-  font-size: 1.375rem;
+  font-weight: var(--type-subsection-title-weight);
+  font-size: var(--type-subsection-title-size);
   line-height: 1.3;
+}
+
+.eyebrow {
+  font-family: var(--header-font-family, sans-serif);
+  font-size: var(--type-eyebrow-size);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+/* Shared card surface */
+.card {
+  background-color: var(--box-background-color);
+  border: var(--theme-border-thin);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  padding: var(--card-padding);
+  box-sizing: border-box;
+}
+
+.card + .card {
+  margin-top: var(--card-gap);
+}
+
+/* Shared buttons. .button is the secondary default; add .button-primary or
+   .button-ghost. Existing button classes compose these via the same tokens. */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4em;
+  padding: var(--button-padding-y) var(--button-padding-x);
+  font-family: var(--body-font-family);
+  font-size: var(--button-font-size);
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--text-color);
+  background-color: var(--row-surface);
+  border: var(--theme-border-thin);
+  border-radius: var(--button-radius);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.button:hover {
+  color: var(--text-color);
+  background-color: var(--row-surface-hover);
+}
+
+.button-primary {
+  color: var(--page-background);
+  background-color: var(--green-accent);
+  border-color: transparent;
+  font-weight: 600;
+}
+
+.button-primary:hover {
+  color: var(--page-background);
+  background-color: color-mix(in srgb, var(--green-accent), white 12%);
+}
+
+.button-ghost {
+  background-color: transparent;
+}
+
+.button:disabled,
+.button[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Dark scrollbars wherever the theme is dark */
+.dark-theme {
+  color-scheme: dark;
+}
+
+.light-theme {
+  color-scheme: light;
+}
+
+* {
+  scrollbar-color: var(--subtle-line-color) transparent;
 }
 
 h4 {

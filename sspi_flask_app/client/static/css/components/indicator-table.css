@@ -20,10 +20,10 @@
   width: 100%;
   max-width: 48rem;
   margin: 0 auto;
-  padding: 1.1rem;
+  padding: var(--card-padding);
   background-color: var(--box-background-color);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-lg);
+  border: var(--theme-border-thin);
+  border-radius: var(--card-radius);
 }
 
 /* ---------- Title block ---------- */
@@ -46,6 +46,7 @@
 .indicator-table-container h2 {
   margin: 0;
   color: var(--header-text-color);
+  font-size: var(--type-page-title-size);
   font-family: var(--title-font-family);
   font-weight: var(--title-weight, 400);
   letter-spacing: -0.01em;
@@ -645,14 +646,15 @@
 /* ---------- Buttons (scoped: /customize owns its own .view-data-btn) ---------- */
 
 .indicator-table-container .view-data-btn {
-  padding: 0.3rem 0.6rem;
+  padding: var(--button-padding-y) var(--button-padding-x);
   color: var(--text-color);
   background-color: var(--row-surface);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-sm);
+  border: var(--theme-border-thin);
+  border-radius: var(--button-radius);
   cursor: pointer;
   font-family: var(--body-font-family);
-  font-size: 0.68rem;
+  font-size: var(--button-font-size);
+  font-weight: 500;
   line-height: 1.4;
   text-decoration: none;
   white-space: nowrap;

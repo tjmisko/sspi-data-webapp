@@ -46,6 +46,28 @@
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   --shadow-lg: 0 8px 25px -5px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.05);
 
+  /* Type scale. html is 16pt, so 1rem = 21.33px. Every page and card title
+     reads from these; do not set heading sizes in page CSS. */
+  --type-page-title-size: 1.75rem;
+  --type-section-title-size: 1.25rem;
+  --type-section-title-weight: 500;
+  --type-subsection-title-size: 0.9rem;
+  --type-subsection-title-weight: 600;
+  --type-eyebrow-size: 0.6rem;
+
+  /* Card surface. One padding, one radius, one border, one shadow. */
+  --card-padding: 1.25rem;
+  --card-radius: var(--border-radius-lg);
+  --card-shadow: var(--shadow-sm);
+  --card-gap: 1.5rem;
+  --page-top-padding: 1.5rem;
+
+  /* Buttons */
+  --button-radius: var(--border-radius);
+  --button-font-size: 0.7rem;
+  --button-padding-y: 0.4em;
+  --button-padding-x: 1em;
+
   /* Ranking Badge Colors — opaque so badge text passes AA in both themes */
   --badge-positive-color: #1e7e34; /* Green for high scores/best ranks */
   --badge-negative-color: #dc2626; /* Red for low scores/worst ranks */

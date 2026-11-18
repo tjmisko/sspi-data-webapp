@@ -18,7 +18,7 @@
         <strong>Error:</strong> No {{PanelItemType}} {{ PanelItemCode }} found!
     </div>
 {% else %}
-    <section class="chart-section" id="dynamic-data-section"></section>
+    <section class="chart-section card score-panel-card" id="dynamic-data-section"></section>
     <script>
     window.addEventListener("load", (event) => {
         // Pass country list from backend to frontend
@@ -42,7 +42,7 @@
         window.observableStorage.setItem('windowY', window.screenY);
     });
     </script>
-    <section class="methodology-section">
+    <section class="methodology-section card score-panel-card">
         <h2> Methodology </h2>
         <section class="methodology-subsection">
             {% if not methodology %}

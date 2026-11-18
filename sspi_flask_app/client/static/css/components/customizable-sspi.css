@@ -8,10 +8,10 @@
   max-width: 85ch;
   margin: 0 auto;
   background-color: var(--box-background-color);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-lg);
-  box-shadow: var(--shadow-md);
-  padding: 1.25rem;
+  border: var(--theme-border-thin);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  padding: var(--card-padding);
   box-sizing: border-box;
 }
 
@@ -24,9 +24,6 @@
 }
 
 .customization-home-box h2 {
-  font-size: 1.4em;
-  line-height: 1.15;
-  padding: 0 var(--theme-gap);
   margin: 0 0 0.6em 0;
 }
 
@@ -36,7 +33,7 @@
 }
 
 .customization-home-box p {
-  padding: 0 var(--theme-gap);
+  padding: 0;
 }
 
 .customization-home-box ul {

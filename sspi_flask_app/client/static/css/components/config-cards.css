@@ -30,9 +30,11 @@
   gap: 0.5rem;
 }
 
-.config-name {
+/* Scoped to the card: custom-sspi-panel-chart.css also defines a global
+   .config-name and loads later in the bundle. */
+.config-card .config-name {
   line-height: 1.25;
-  font-size: 1rem;
+  font-size: var(--type-subsection-title-size);
   font-weight: 600;
   margin: 0;
   color: var(--text-color);

@@ -4,9 +4,9 @@
   width: 100%;
   background-color: var(--box-background-color);
   border: var(--theme-border-thin);
-  border-radius: var(--border-radius-lg);
-  box-shadow: var(--shadow-md);
-  padding: 1.25rem;
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  padding: var(--card-padding);
   box-sizing: border-box;
   margin-bottom: 2rem;
 }
@@ -16,9 +16,6 @@
 }
 
 .country-overview-box h2 {
-  font-size: 1.375rem;
-  font-weight: 500;
-  line-height: 1.25;
   margin: 0 0 0.4rem;
 }
 
