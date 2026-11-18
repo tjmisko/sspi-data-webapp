@@ -319,7 +319,7 @@ class ChangesHistoryModal {
         const exportBtn = document.createElement('button');
         exportBtn.className = 'changes-action-btn';
         exportBtn.id = 'export-changes-btn';
-        exportBtn.textContent = '📥 Export Changes';
+        exportBtn.textContent = 'Export Changes';
         exportBtn.title = 'Download changes as JSON';
 
         footer.appendChild(exportBtn);

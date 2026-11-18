@@ -45,7 +45,7 @@ class IndicatorSelectionMenu {
                     </div>
                 </button>
                 <button id="add-existing-indicator" class="indicator-option-btn add-existing">
-                    <div class="option-icon">📋</div>
+                    <div class="option-icon">≡</div>
                     <div class="option-text">
                         <div class="option-title">Add Existing Indicator</div>
                         <div class="option-description">Choose from the SSPI indicator library</div>
