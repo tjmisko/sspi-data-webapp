@@ -17,8 +17,8 @@ LowerGoalpost: null
 UpperGoalpost: null
 ScoreFunction: >
     Score = average(
-        goalpost(UNSDG_INTRNT, 0, 100),
-        goalpost(WB_INTRNT, 0, 100)
+        goalpost(UNSDG_AVINTR, 0, 100),
+        goalpost(CABLE_QUINTR, 0, 100)
     )
 ---
 

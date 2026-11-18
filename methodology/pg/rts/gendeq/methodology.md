@@ -20,6 +20,10 @@ DatasetCodes:
   - WBL_WMFNMN
 LowerGoalpost: null
 UpperGoalpost: null
-ScoreFunction: Not available (computed from multiple weighted datasets)
+ScoreFunction: >
+  Score = 0.4 * goalpost(IPU_WMPLMT, 0, 50)
+        + 0.2 * goalpost(WBL_WMMOBL, 0, 100)
+        + 0.2 * goalpost(WBL_WMMARR, 0, 100)
+        + 0.2 * goalpost(WBL_WMFNMN, 0, 100)
 ---
 

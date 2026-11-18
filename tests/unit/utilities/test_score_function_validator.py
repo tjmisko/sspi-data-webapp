@@ -740,3 +740,234 @@ class TestASTEvaluationCorrectness:
         )
         # -50 mapped over [-100, 0] -> 0.5
         assert score == 0.5
+
+
+# =============================================================================
+# Convex combinations of bounded terms
+# =============================================================================
+
+GP_A = "goalpost(DATASET_A, 0, 100)"
+GP_B = "goalpost(DATASET_B, 0, 100)"
+GP_C = "goalpost(DATASET_C, 0, 100)"
+
+OFFICIAL_CONVEX_FUNCTIONS = [
+    "Score = 0.5 * goalpost(WB_AVELEC, 0, 100) + 0.5 * goalpost(WB_ELCLOS, 25, 5)",
+    "Score = (goalpost(WB_INTRNT, 0, 100) + goalpost(UNSDG_INTRNT, 0, 100)) / 2",
+    # GENDEQ, verbatim multi-line form
+    "Score = 0.4 * goalpost(IPU_WMPLMT, 0, 50) +\n"
+    "        0.2 * goalpost(WBL_WMMOBL, 0, 100) +\n"
+    "        0.2 * goalpost(WBL_WMMARR, 0, 100) +\n"
+    "        0.2 * goalpost(WBL_WMFNMN, 0, 100)",
+]
+
+
+class TestConvexCombinationAccepted:
+
+    @pytest.mark.parametrize("func", OFFICIAL_CONVEX_FUNCTIONS)
+    def test_should_accept_official_function_when_weights_sum_to_one(self, func):
+        assert validate_score_function(func) is not None
+
+    @pytest.mark.parametrize("func", [
+        f"Score = 0.5 * {GP_A} + 0.5 * {GP_B}",
+        f"Score = {GP_A} * 0.5 + {GP_B} * 0.5",
+        f"Score = 0.5 * {GP_A} + {GP_B} * 0.5",
+        f"Score = 0.3 * {GP_A} + 0.7 * {GP_B}",
+        f"Score = 0 * {GP_A} + 1 * {GP_B}",
+        f"Score = 1 * {GP_A}",
+        f"Score = 0.1 * {GP_A} + 0.2 * {GP_B} + 0.7 * {GP_C}",  # 0.1+0.2+0.7 != 1.0 exactly
+        f"Score = 0.7 * {GP_A} + 0.2 * {GP_B} + 0.1 * {GP_C}",
+        f"Score = {GP_A} / 2 + {GP_B} / 2",
+        f"Score = ({GP_A} + {GP_B} + {GP_C}) / 3",
+        f"Score = ({GP_A} + {GP_B}) / 2.0",
+        f"Score = ({GP_A} + 0.5 * {GP_B} + 0.5 * {GP_C}) / 2",
+    ])
+    def test_should_accept_when_nonnegative_constant_weights_sum_to_one(self, func):
+        assert validate_score_function(func) is not None
+
+    @pytest.mark.parametrize("func", [
+        f"Score = 0.5 * average({GP_A}, {GP_B}) + 0.5 * {GP_C}",
+        f"Score = 0.5 * min({GP_A}, {GP_B}) + 0.5 * max({GP_A}, {GP_C})",
+        f"Score = 0.5 * (0.5 * {GP_A} + 0.5 * {GP_B}) + 0.5 * {GP_C}",
+        f"Score = average(0.5 * {GP_A} + 0.5 * {GP_B}, {GP_C})",
+        f"Score = max(({GP_A} + {GP_B}) / 2, {GP_C})",
+        f"Score = (({GP_A} + {GP_B}) / 2 + {GP_C}) / 2",
+    ])
+    def test_should_accept_when_terms_are_nested_bounded_expressions(self, func):
+        assert validate_score_function(func) is not None
+
+    def test_should_collect_dataset_codes_when_convex_combination_validated(self):
+        validated = validate_score_function(f"Score = 0.5 * {GP_A} + 0.5 * {GP_B}")
+        assert validated.dataset_codes == {"DATASET_A", "DATASET_B"}
+
+
+class TestConvexCombinationRejected:
+
+    @pytest.mark.parametrize("func", [
+        f"Score = 0.6 * {GP_A} + 0.6 * {GP_B}",      # sums to 1.2
+        f"Score = 0.4 * {GP_A} + 0.4 * {GP_B}",      # sums to 0.8
+        f"Score = 0.5 * {GP_A}",                     # sums to 0.5
+        f"Score = 0.5 * {GP_A} + 0.5000001 * {GP_B}",  # outside tolerance
+        f"Score = 2 * {GP_A}",
+        f"Score = {GP_A} + {GP_B}",                  # sums to 2
+    ])
+    def test_should_reject_when_weights_do_not_sum_to_one(self, func):
+        with pytest.raises(ScoreFunctionValidationError):
+            validate_score_function(func)
+
+    @pytest.mark.parametrize("func", [
+        f"Score = -0.5 * {GP_A} + 1.5 * {GP_B}",
+        f"Score = 1.5 * {GP_A} + -0.5 * {GP_B}",
+        f"Score = {GP_A} * -1 + 2 * {GP_B}",
+        f"Score = -1 * {GP_A}",
+        f"Score = -{GP_A}",
+    ])
+    def test_should_reject_when_weight_is_negative(self, func):
+        with pytest.raises(ScoreFunctionValidationError):
+            validate_score_function(func)
+
+    @pytest.mark.parametrize("func", [
+        f"Score = WB_X * {GP_A}",
+        f"Score = 0.5 * {GP_A} + WB_X * {GP_B}",
+        f"Score = DATASET_X * {GP_A} + (1 - DATASET_X) * {GP_B}",
+        f"Score = {GP_A} * {GP_B}",                  # product of bounded terms: no constant weight
+        f"Score = 0.5 * 0.5 * {GP_A} + 0.5 * {GP_B}",  # computed weight is not a literal
+        f"Score = 0.5 * LowerGoalpost * {GP_A} + 0.5 * {GP_B}",
+    ])
+    def test_should_reject_when_weight_is_not_a_constant(self, func):
+        with pytest.raises(ScoreFunctionValidationError):
+            validate_score_function(func)
+
+    @pytest.mark.parametrize("func", [
+        f"Score = 0.5 * {GP_A} + 0.5 * DATASET_X",
+        f"Score = 0.5 * {GP_A} + 0.5",
+        f"Score = 0.5 * {GP_A} + 0.5 * sqrt({GP_B})",
+        f"Score = ({GP_A} + DATASET_X) / 2",
+        f"Score = 0.5 * {GP_A} + 0.5 * pow({GP_B}, 2)",
+    ])
+    def test_should_reject_when_sum_contains_unbounded_term(self, func):
+        with pytest.raises(ScoreFunctionValidationError):
+            validate_score_function(func)
+
+    @pytest.mark.parametrize("func", [
+        f"Score = ({GP_A} + {GP_B}) / 3",
+        f"Score = ({GP_A} + {GP_B}) / 1",
+        f"Score = ({GP_A} + {GP_B}) / 0",
+        f"Score = ({GP_A} + {GP_B}) / -2",
+        f"Score = ({GP_A} + {GP_B}) / DATASET_X",
+        f"Score = ({GP_A} + {GP_B}) / {GP_C}",
+        f"Score = {GP_A} / {GP_B}",
+        f"Score = 2 / ({GP_A} + {GP_B})",
+        f"Score = 1 / {GP_A}",
+    ])
+    def test_should_reject_when_division_is_not_an_exact_mean(self, func):
+        with pytest.raises(ScoreFunctionValidationError):
+            validate_score_function(func)
+
+    @pytest.mark.parametrize("func", [
+        f"Score = {GP_A} - {GP_B}",
+        f"Score = 1 - {GP_A}",
+        f"Score = 1.5 * {GP_A} - 0.5 * {GP_B}",
+        f"Score = 0.5 * {GP_A} + 0.5 * {GP_B} - 0.5 * {GP_C}",
+    ])
+    def test_should_reject_when_expression_uses_subtraction(self, func):
+        with pytest.raises(ScoreFunctionValidationError):
+            validate_score_function(func)
+
+    def test_should_reject_when_nested_term_is_overweight(self):
+        # inner sum is in [0, 1.2]; outer weights sum to 1 but inner is not bounded
+        with pytest.raises(ScoreFunctionValidationError):
+            validate_score_function(
+                f"Score = 0.5 * (0.6 * {GP_A} + 0.6 * {GP_B}) + 0.5 * {GP_C}"
+            )
+
+    def test_should_reject_when_aggregator_contains_unbounded_sum(self):
+        with pytest.raises(ScoreFunctionValidationError):
+            validate_score_function(f"Score = average({GP_A} + {GP_B}, {GP_C})")
+
+
+class TestConvexCombinationExecution:
+    """Accepted forms must execute to the exact weighted result."""
+
+    def test_should_return_exact_weights_when_goalposts_are_zero_one_and_midpoint(self):
+        func = f"Score = 0.3 * {GP_A} + 0.7 * {GP_B}"
+        cases = [
+            ({"DATASET_A": 0, "DATASET_B": 0}, 0.0),
+            ({"DATASET_A": 100, "DATASET_B": 100}, 1.0),
+            ({"DATASET_A": 100, "DATASET_B": 0}, 0.3),
+            ({"DATASET_A": 0, "DATASET_B": 100}, 0.7),
+            ({"DATASET_A": 50, "DATASET_B": 50}, 0.5),
+        ]
+        for values, expected in cases:
+            assert validate_and_execute(func, values) == pytest.approx(expected)
+
+    def test_should_return_mean_when_dividing_sum_by_count(self):
+        func = f"Score = ({GP_A} + {GP_B} + {GP_C}) / 3"
+        values = {"DATASET_A": 0, "DATASET_B": 50, "DATASET_C": 100}
+        assert validate_and_execute(func, values) == pytest.approx(0.5)
+
+    def test_should_handle_inverted_goalpost_when_in_official_elclos_form(self):
+        func = "Score = 0.5 * goalpost(WB_AVELEC, 0, 100) + 0.5 * goalpost(WB_ELCLOS, 25, 5)"
+        assert validate_and_execute(func, {"WB_AVELEC": 100, "WB_ELCLOS": 5}) == pytest.approx(1.0)
+        assert validate_and_execute(func, {"WB_AVELEC": 0, "WB_ELCLOS": 25}) == pytest.approx(0.0)
+        assert validate_and_execute(func, {"WB_AVELEC": 100, "WB_ELCLOS": 25}) == pytest.approx(0.5)
+
+    def test_should_execute_multiline_gendeq_when_values_given(self):
+        func = OFFICIAL_CONVEX_FUNCTIONS[2]
+        values = {"IPU_WMPLMT": 50, "WBL_WMMOBL": 0, "WBL_WMMARR": 100, "WBL_WMFNMN": 50}
+        # 0.4*1 + 0.2*0 + 0.2*1 + 0.2*0.5
+        assert validate_and_execute(func, values) == pytest.approx(0.7)
+
+    def test_should_clamp_goalposts_when_values_outside_range(self):
+        func = f"Score = 0.5 * {GP_A} + 0.5 * {GP_B}"
+        values = {"DATASET_A": 1000, "DATASET_B": -1000}
+        result = validate_and_execute(func, values)
+        assert 0.0 <= result <= 1.0
+        assert result == pytest.approx(0.5)
+
+    def test_should_evaluate_nested_combination_when_terms_nest(self):
+        func = f"Score = 0.5 * average({GP_A}, {GP_B}) + 0.5 * {GP_C}"
+        values = {"DATASET_A": 100, "DATASET_B": 0, "DATASET_C": 100}
+        assert validate_and_execute(func, values) == pytest.approx(0.75)
+
+    def test_should_stay_in_unit_interval_when_weights_sum_with_float_error(self):
+        func = f"Score = 0.1 * {GP_A} + 0.2 * {GP_B} + 0.7 * {GP_C}"
+        values = {"DATASET_A": 100, "DATASET_B": 100, "DATASET_C": 100}
+        assert validate_and_execute(func, values) == pytest.approx(1.0)
+
+    def test_should_raise_when_nan_input_reaches_safe_eval(self):
+        func = f"Score = 0.5 * {GP_A} + 0.5 * {GP_B}"
+        with pytest.raises(ScoreFunctionValidationError):
+            validate_and_execute(func, {"DATASET_A": float("nan"), "DATASET_B": 50})
+
+
+class TestConvexCombinationVectorized:
+    """The fast_custom_scoring evaluator runs the new forms and propagates NaN."""
+
+    def test_should_score_grid_and_propagate_nan_when_applying_convex_function(self):
+        import numpy as np
+        from sspi_flask_app.api.resources.fast_custom_scoring import _apply_custom_score_function
+
+        # shape (n_datasets=2, n_countries=2, n_years=2)
+        stack = np.array([
+            [[0.0, 100.0], [50.0, np.nan]],
+            [[0.0, 0.0], [50.0, 100.0]],
+        ])
+        func = f"Score = 0.3 * {GP_A} + 0.7 * {GP_B}"
+        result = _apply_custom_score_function(
+            func, stack, ["DATASET_A", "DATASET_B"], None, None
+        )
+        assert result[0, 0] == pytest.approx(0.0)
+        assert result[0, 1] == pytest.approx(0.3)
+        assert result[1, 0] == pytest.approx(0.5)
+        assert np.isnan(result[1, 1])
+
+    def test_should_score_mean_form_when_applied_to_grid(self):
+        import numpy as np
+        from sspi_flask_app.api.resources.fast_custom_scoring import _apply_custom_score_function
+
+        stack = np.array([[[100.0]], [[0.0]]])
+        func = f"Score = ({GP_A} + {GP_B}) / 2"
+        result = _apply_custom_score_function(
+            func, stack, ["DATASET_A", "DATASET_B"], None, None
+        )
+        assert result[0, 0] == pytest.approx(0.5)

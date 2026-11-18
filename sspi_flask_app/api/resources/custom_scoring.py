@@ -73,7 +73,8 @@ class EmptyDatasetResult:
 
 def identify_empty_datasets(
     metadata: list[dict],
-    required_datasets: set[str] | None = None
+    required_datasets: set[str] | None = None,
+    droppable_codes: set[str] | None = None
 ) -> EmptyDatasetResult:
     """
     Identify datasets with zero data and indicators that should be dropped.
@@ -87,6 +88,12 @@ def identify_empty_datasets(
         metadata: Custom SSPI metadata structure (list of item dicts)
         required_datasets: Optional set of dataset codes to check.
                           If None, extracts from metadata indicators.
+        droppable_codes: Indicator codes eligible to be dropped. Indicators
+                         outside this set (those unchanged from the default
+                         SSPI) are always scorable: they reuse official
+                         scores and never read raw datasets, so empty raw
+                         datasets must not remove them. None means every
+                         indicator is droppable.
 
     Returns:
         EmptyDatasetResult with empty datasets and dropped/scorable indicators
@@ -94,10 +101,20 @@ def identify_empty_datasets(
     from sspi_flask_app.models.database import sspi_clean_api_data
 
     # Extract indicators from metadata
-    indicators = [
+    all_indicators = [
         item for item in metadata
         if item.get("ItemType") == "Indicator"
     ]
+
+    def _is_droppable(ind: dict) -> bool:
+        if droppable_codes is None:
+            return True
+        code = ind.get("ItemCode") or ind.get("IndicatorCode")
+        return not code or code in droppable_codes
+
+    # Only droppable indicators are checked; the rest pass straight through.
+    indicators = [ind for ind in all_indicators if _is_droppable(ind)]
+    kept_indicators = [ind for ind in all_indicators if not _is_droppable(ind)]
 
     # Collect all required dataset codes from indicators
     if required_datasets is None:
@@ -112,7 +129,7 @@ def identify_empty_datasets(
         return EmptyDatasetResult(
             empty_datasets=set(),
             dropped_indicators=[],
-            scorable_indicators=indicators
+            scorable_indicators=all_indicators
         )
 
     # Fast aggregation: get all dataset codes that have data
@@ -173,7 +190,7 @@ def identify_empty_datasets(
     return EmptyDatasetResult(
         empty_datasets=empty_datasets,
         dropped_indicators=dropped_indicators,
-        scorable_indicators=scorable_indicators
+        scorable_indicators=kept_indicators + scorable_indicators
     )
 
 

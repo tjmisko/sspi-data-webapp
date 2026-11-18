@@ -18,7 +18,11 @@ import logging
 import numpy as np
 from typing import Callable
 
-from sspi_flask_app.models.database import sspi_clean_api_data, sspi_metadata
+from sspi_flask_app.models.database import (
+    sspi_clean_api_data,
+    sspi_item_data,
+    sspi_metadata,
+)
 from sspi_flask_app.api.resources.score_function_validator import (
     validate_score_function,
     safe_eval,
@@ -133,6 +137,14 @@ def fetch_all_datasets_aggregated(
     return result
 
 
+def _row_means_ignoring_nan(data: np.ndarray) -> np.ndarray:
+    """Per-row mean over non-NaN cells, omitting rows that have none."""
+    present = ~np.isnan(data)
+    counts = present.sum(axis=1)
+    sums = np.where(present, data, 0.0).sum(axis=1)
+    return sums[counts > 0] / counts[counts > 0]
+
+
 def impute_dataset_vectorized(
     data: np.ndarray,
     reference_mask: np.ndarray,
@@ -141,10 +153,20 @@ def impute_dataset_vectorized(
     """
     Vectorized imputation for a dataset array.
 
-    Handles three scenarios:
+    Handles three scenarios, mirroring utilities.impute_dataset (the official
+    dataset-level imputation) so edited indicators get the same gap treatment:
     1. Entire dataset empty: fill with neutral_fill (0.5)
-    2. Country has no data: use reference class average
-    3. Country has partial data: forward/backward extrapolation
+    2. Country has no data: use the reference class average (mean of the
+       reference countries' own means)
+    3. Country has partial data: backward/forward extrapolation plus linear
+       interpolation
+
+    Known differences from the official pipeline: the official indicator
+    series are additionally filled by per-indicator imputation routes and
+    documented reference sets (sspi_imputed_data), which a user-edited
+    indicator cannot use; and the reference average here is taken over the
+    scored country set and year window only, while impute_dataset reads every
+    year stored for the dataset.
 
     Args:
         data: Array of shape (n_countries, n_years), may contain np.nan
@@ -175,8 +197,14 @@ def impute_dataset_vectorized(
         # Compute reference class average across all years
         reference_data = data[reference_mask, :]
         if reference_data.size > 0:
-            # Average over reference countries, ignoring NaN
-            reference_avg = np.nanmean(reference_data)
+            # Mean of each reference country's own mean (countries with no
+            # data excluded), exactly as utilities.impute_dataset does. This
+            # is NOT the pooled mean over every cell: a country with more
+            # observed years must not weigh more.
+            country_means = _row_means_ignoring_nan(reference_data)
+            reference_avg = (
+                float(np.mean(country_means)) if country_means.size else np.nan
+            )
             if not np.isnan(reference_avg):
                 imputed_data[no_data_countries, :] = reference_avg
                 logger.debug(f"Filled {np.sum(no_data_countries)} countries with reference average {reference_avg:.4f}")
@@ -306,6 +334,11 @@ class FastCustomSSPI:
 
         # Build the aggregation matrix
         self.score_matrix = self._build_score_matrix()
+
+        # Per-level weight matrices used by the NaN-safe aggregate()
+        (self._indicator_to_category,
+         self._category_to_pillar,
+         self._pillar_to_sspi) = self._build_level_matrices()
 
     def _normalized_child_weight(
         self, child_code: str, sibling_codes: list[str]
@@ -510,9 +543,84 @@ class FastCustomSSPI:
         """
         return self._parent_map.get((child_code, parent_type))
 
+    def _build_level_matrices(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """
+        Direct (one level at a time) normalized weight matrices.
+
+        Returns (indicator->category, category->pillar, pillar->SSPI), shapes
+        (n_ind, n_cat), (n_cat, n_pil), (n_pil, 1). Entry [child, parent] is the
+        child's normalized weight within the parent's sibling set (same
+        ``_normalized_child_weight`` the flat score_matrix uses); zero where the
+        child does not belong to the parent.
+        """
+        n_ind = len(self.indicator_codes)
+        n_cat = len(self.category_codes)
+        n_pil = len(self.pillar_codes)
+        ind_to_cat = np.zeros((n_ind, n_cat), dtype=float)
+        cat_to_pil = np.zeros((n_cat, n_pil), dtype=float)
+        pil_to_sspi = np.zeros((n_pil, 1), dtype=float)
+
+        for ind_idx, ind_code in enumerate(self.indicator_codes):
+            category = self._find_parent(ind_code, "Category")
+            if not category:
+                continue
+            siblings = category.get("IndicatorCodes") or category.get("Children") or []
+            if not siblings:
+                continue
+            ind_to_cat[ind_idx, self.category_code_to_idx[category["ItemCode"]]] = (
+                self._normalized_child_weight(ind_code, siblings)
+            )
+        for cat_idx, cat_code in enumerate(self.category_codes):
+            pillar = self._find_parent(cat_code, "Pillar")
+            if not pillar:
+                continue
+            siblings = pillar.get("CategoryCodes") or pillar.get("Children") or []
+            if not siblings:
+                continue
+            cat_to_pil[cat_idx, self.pillar_code_to_idx[pillar["ItemCode"]]] = (
+                self._normalized_child_weight(cat_code, siblings)
+            )
+        for pil_idx, pil_code in enumerate(self.pillar_codes):
+            sspi = self._find_parent(pil_code, "SSPI")
+            if not sspi:
+                continue
+            siblings = sspi.get("PillarCodes") or sspi.get("Children") or []
+            if not siblings:
+                continue
+            pil_to_sspi[pil_idx, 0] = self._normalized_child_weight(pil_code, siblings)
+        return ind_to_cat, cat_to_pil, pil_to_sspi
+
+    @staticmethod
+    def _weighted_mean_over_available(
+        child_scores: np.ndarray, weights: np.ndarray
+    ) -> np.ndarray:
+        """
+        Weighted mean of children, re-normalized over those with data.
+
+        child_scores: (n_child, N) possibly containing NaN.
+        weights: (n_child, n_parent) normalized child weights.
+        Returns (n_parent, N). With every child present this is the plain
+        weighted mean (the official aggregation when weights are equal); a
+        missing child's weight is redistributed over the present siblings; a
+        parent with no present child (or zero present weight) is NaN.
+        """
+        present = ~np.isnan(child_scores)
+        numerator = weights.T @ np.where(present, child_scores, 0.0)
+        denominator = weights.T @ present.astype(float)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            result = numerator / denominator
+        return np.where(denominator > 0, result, np.nan)
+
     def aggregate(self, indicator_scores: np.ndarray) -> np.ndarray:
         """
-        Aggregate indicator scores to all hierarchy levels via matrix multiplication.
+        Aggregate indicator scores to all hierarchy levels, one level at a time.
+
+        Matches the official pipeline (SSPI model: each category/pillar/SSPI
+        score is the mean of its children) when every child has data, using
+        the configured per-parent weights (equal when none are set). When a
+        child is missing for a country-year its weight is re-normalized over
+        the siblings that have data, so one NaN no longer poisons the parent.
+        A parent with no child data stays NaN.
 
         Args:
             indicator_scores: Array of shape (n_indicators, n_countries, n_years)
@@ -523,27 +631,19 @@ class FastCustomSSPI:
         """
         n_indicators, n_countries, n_years = indicator_scores.shape
         n_items = len(self.item_codes)
-
-        logger.debug(
-            f"Aggregating scores: {n_indicators} indicators -> {n_items} items "
-            f"for {n_countries} countries, {n_years} years"
-        )
-
-        # Reshape to (n_indicators, n_countries * n_years) for matrix multiplication
         flat_scores = indicator_scores.reshape(n_indicators, n_countries * n_years)
 
-        # Matrix multiply: score_matrix.T @ flat_scores
-        # score_matrix shape: (n_indicators, n_items)
-        # score_matrix.T shape: (n_items, n_indicators)
-        # flat_scores shape: (n_indicators, n_countries * n_years)
-        # result shape: (n_items, n_countries * n_years)
-        aggregated_flat = self.score_matrix.T @ flat_scores
-
-        # Reshape back to (n_items, n_countries, n_years)
-        aggregated_scores = aggregated_flat.reshape(n_items, n_countries, n_years)
-
-        logger.debug(f"Aggregation complete: {aggregated_scores.shape}")
-        return aggregated_scores
+        categories = self._weighted_mean_over_available(
+            flat_scores, self._indicator_to_category
+        )
+        pillars = self._weighted_mean_over_available(
+            categories, self._category_to_pillar
+        )
+        sspi = self._weighted_mean_over_available(
+            pillars, self._pillar_to_sspi
+        )
+        aggregated_flat = np.concatenate([categories, pillars, sspi], axis=0)
+        return aggregated_flat.reshape(n_items, n_countries, n_years)
 
 
 # =============================================================================
@@ -878,6 +978,62 @@ def compute_ranks_vectorized(all_scores: np.ndarray) -> np.ndarray:
     return ranks
 
 
+def fetch_baseline_indicator_scores(
+    indicator_codes: list[str],
+    country_codes: list[str],
+    start_year: int = DEFAULT_START_YEAR,
+    end_year: int = DEFAULT_END_YEAR
+) -> dict[str, np.ndarray]:
+    """
+    Fetch official indicator scores (sspi_item_data, the collection behind the
+    main site's data pages) for the given indicators.
+
+    Returns:
+        Dict mapping indicator code -> (n_countries, n_years) array, NaN where
+        no official score exists. Every requested code gets an array.
+    """
+    n_countries = len(country_codes)
+    n_years = end_year - start_year + 1
+    result = {
+        code: np.full((n_countries, n_years), np.nan, dtype=float)
+        for code in indicator_codes
+    }
+    if not indicator_codes or not country_codes:
+        return result
+    cursor = sspi_item_data.find(
+        {
+            "ItemCode": {"$in": list(indicator_codes)},
+            "ItemType": "Indicator",
+            "CountryCode": {"$in": country_codes},
+            "Year": {"$gte": start_year, "$lte": end_year},
+        },
+        {"_id": 0, "ItemCode": 1, "CountryCode": 1, "Year": 1, "Score": 1},
+    )
+    _fill_baseline_arrays(result, cursor, country_codes, start_year, end_year)
+    return result
+
+
+def _fill_baseline_arrays(
+    arrays: dict[str, np.ndarray],
+    docs,
+    country_codes: list[str],
+    start_year: int,
+    end_year: int
+) -> None:
+    """Place score docs (ItemCode, CountryCode, Year, Score) into arrays."""
+    country_to_idx = {code: idx for idx, code in enumerate(country_codes)}
+    for doc in docs:
+        array = arrays.get(doc.get("ItemCode"))
+        country_idx = country_to_idx.get(doc.get("CountryCode"))
+        year = doc.get("Year")
+        score = doc.get("Score")
+        if array is None or country_idx is None or score is None:
+            continue
+        if not isinstance(year, int) or not start_year <= year <= end_year:
+            continue
+        array[country_idx, year - start_year] = score
+
+
 # =============================================================================
 # Phase 5: Main Pipeline
 # =============================================================================
@@ -897,15 +1053,21 @@ def score_custom_configuration_fast(
 
     Drop-in replacement for score_custom_configuration() with same interface.
 
-    NOTE: This function always scores ALL indicators in the metadata because
-    the matrix multiplication requires consistent dimensions. The metadata
-    should be pre-filtered to remove indicators with empty datasets before
-    calling this function.
+    Only indicators in `modified_indicators` are computed from raw datasets.
+    Every other indicator's row of the (n_indicators, n_countries, n_years)
+    score array is filled from the official baseline scores, so the matrix
+    multiplication still sees consistent dimensions. If `modified_indicators`
+    is None every indicator is computed (legacy behavior). Indicators without
+    an ItemCode are always computed. The metadata should be pre-filtered to
+    remove indicators with empty datasets before calling this function.
 
     Args:
         metadata: Custom SSPI metadata structure (pre-filtered for data availability)
-        modified_indicators: IGNORED - kept for interface compatibility
-        default_scores: IGNORED - kept for interface compatibility
+        modified_indicators: Codes of indicators to compute; the rest reuse
+            baseline scores. None computes all.
+        default_scores: Optional baseline score docs per indicator code
+            (item_code -> [{CountryCode, Year, Score}, ...]). If None the
+            baseline is read from sspi_item_data.
         country_codes: List of country codes to score (defaults to SSPI67)
         reference_group: Country group for reference class averaging
         start_year: Start year for scoring
@@ -927,10 +1089,8 @@ def score_custom_configuration_fast(
         logger.warning(f"No country codes found for reference group {reference_group}")
         return {}
 
-    # Extract all indicators from metadata
-    # NOTE: We always score ALL indicators in the metadata because the
-    # aggregation matrix dimensions must match. The vectorized operations
-    # are fast enough that partial scoring is not necessary.
+    # Extract all indicators from metadata, split into those computed from raw
+    # datasets and those whose rows come from the official baseline scores.
     # The metadata should already be filtered to remove dropped indicators
     # (those with empty datasets) before calling this function.
     all_indicators = [
@@ -938,35 +1098,44 @@ def score_custom_configuration_fast(
         if item.get("ItemType") == "Indicator"
     ]
 
-    # Always score all indicators - matrix multiplication requires consistent dimensions
-    indicators_to_score = all_indicators
+    def _is_computed(ind: dict) -> bool:
+        if modified_indicators is None:
+            return True
+        code = ind.get("ItemCode")
+        return not code or code in modified_indicators
+
+    indicators_to_score = [ind for ind in all_indicators if _is_computed(ind)]
+    baseline_indicators = [ind for ind in all_indicators if not _is_computed(ind)]
 
     logger.info(
-        f"Fast pipeline: Scoring {len(indicators_to_score)} indicators"
+        f"Fast pipeline: computing {len(indicators_to_score)} indicators, "
+        f"reusing baseline scores for {len(baseline_indicators)}"
     )
 
     # Phase 1: Fetch datasets
     if progress_callback:
         progress_callback("scoring", 5, "Fetching datasets...")
 
-    # Collect all dataset codes needed
+    # Collect all dataset codes needed by the computed indicators
     dataset_codes = set()
     for ind in indicators_to_score:
         codes = ind.get("DatasetCodes", [])
         if codes:
             dataset_codes.update(codes)
 
-    if not dataset_codes:
+    if not dataset_codes and not baseline_indicators:
         logger.warning("No dataset codes found in indicators")
         return {}
 
-    logger.info(f"Fetching {len(dataset_codes)} datasets")
-    dataset_arrays = fetch_all_datasets_aggregated(
-        list(dataset_codes),
-        country_codes,
-        start_year,
-        end_year
-    )
+    dataset_arrays = {}
+    if dataset_codes:
+        logger.info(f"Fetching {len(dataset_codes)} datasets")
+        dataset_arrays = fetch_all_datasets_aggregated(
+            list(dataset_codes),
+            country_codes,
+            start_year,
+            end_year
+        )
 
     # Phase 2: Impute datasets
     if progress_callback:
@@ -991,13 +1160,57 @@ def score_custom_configuration_fast(
     if progress_callback:
         progress_callback("scoring", 40, "Scoring indicators...")
 
-    indicator_scores = score_indicators_vectorized(
+    computed_scores = score_indicators_vectorized(
         indicators_to_score,
         dataset_arrays,
         country_codes,
         start_year,
         end_year
     )
+
+    if baseline_indicators:
+        baseline_codes = [ind.get("ItemCode") for ind in baseline_indicators]
+        if default_scores is None:
+            baseline_arrays = fetch_baseline_indicator_scores(
+                baseline_codes, country_codes, start_year, end_year
+            )
+        else:
+            baseline_arrays = {
+                code: np.full(
+                    (len(country_codes), end_year - start_year + 1), np.nan
+                )
+                for code in baseline_codes
+            }
+            for code in baseline_codes:
+                _fill_baseline_arrays(
+                    baseline_arrays,
+                    ({**doc, "ItemCode": code} for doc in default_scores.get(code, [])),
+                    country_codes, start_year, end_year
+                )
+        # Aggregation is a plain matrix multiply, so a NaN cell in any row
+        # nulls every aggregate for that country-year (same as for computed
+        # rows). Surface gaps in the official data so they are diagnosable.
+        for code, arr in baseline_arrays.items():
+            n_nan = int(np.isnan(arr).sum())
+            if n_nan:
+                logger.warning(
+                    f"Baseline scores for {code} have {n_nan} missing "
+                    f"country-year cells out of {arr.size}"
+                )
+        # Merge in metadata order so rows line up with FastCustomSSPI.
+        indicator_scores = np.full(
+            (len(all_indicators), len(country_codes), end_year - start_year + 1),
+            np.nan, dtype=np.float64
+        )
+        computed_iter = iter(computed_scores)
+        for row, ind in enumerate(all_indicators):
+            if _is_computed(ind):
+                indicator_scores[row] = next(computed_iter)
+            else:
+                indicator_scores[row] = baseline_arrays[ind.get("ItemCode")]
+        indicators_to_score = all_indicators
+    else:
+        indicator_scores = computed_scores
 
     # Drop indicators that produced no usable score anywhere (NaN across every
     # country and year). This happens when a score function needs a dataset
@@ -1057,9 +1270,6 @@ def score_custom_configuration_fast(
         start_year,
         metadata
     )
-
-    # NOTE: default_scores parameter is ignored - we always score all indicators
-    # in the metadata for correct matrix multiplication dimensions
 
     if progress_callback:
         total_docs = sum(len(docs) for docs in result.values())

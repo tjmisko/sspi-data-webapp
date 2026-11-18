@@ -468,6 +468,17 @@
   cursor: pointer;
 }
 
+/* Dataset code present in the config but without dataset metadata. */
+.customizable-sspi .dataset-item-unknown {
+  border-style: dashed;
+  border-left: 3px solid var(--accent-color);
+}
+
+.customizable-sspi .dataset-item-unknown .dataset-name {
+  color: var(--low-importance-font-color);
+  font-style: italic;
+}
+
 .customizable-sspi .dataset-info {
   display: flex;
   flex-direction: column-reverse;

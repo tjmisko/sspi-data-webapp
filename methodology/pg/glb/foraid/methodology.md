@@ -22,8 +22,15 @@ LowerGoalpost: null
 UpperGoalpost: null
 ScoreFunction: >
     Score = max(
-        goalpost(TOTDON * pow(10, 8) / GDPMKT, 0, 1),
-        goalpost(TOTREC * pow(10, 6) / POPULN, 0, 500)
+        goalpost(OECD_TOTDON * pow(10, 8) / WB_GDPMKT, 0, 1),
+        goalpost(OECD_TONREC * pow(10, 6) / WB_POPULN, 0, 500)
     )
+ScoreFunctionDescription: >
+  Countries are scored as donors or recipients, not both. If total donations
+  exceed total receipts (OECD_TOTDON > OECD_TONREC) the score is
+  goalpost(OECD_TOTDON * 10^8 / WB_GDPMKT, 0, 1), otherwise it is
+  goalpost(OECD_TONREC * 10^6 / WB_POPULN, 0, 500). The runnable ScoreFunction
+  takes the larger of the two goalposted terms because the DSL has no
+  conditional.
 ---
 

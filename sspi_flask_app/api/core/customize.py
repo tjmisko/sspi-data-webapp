@@ -28,6 +28,32 @@ from sspi_flask_app.api.resources.custom_scoring import (
 )
 from sspi_flask_app.models.errors import InvalidDocumentFormatError, LimitExceededError
 from sspi_flask_app.models.rank import SSPIRankingTable
+
+
+def build_dataset_details_map(dataset_details_list, metadata_items):
+    """Map DatasetCode -> details for the builder.
+
+    Any dataset code referenced by an indicator's DatasetCodes that has no
+    dataset metadata gets a placeholder entry (flagged ``Unknown``) so the
+    builder keeps it instead of silently dropping it.
+    """
+    details_map = {d["DatasetCode"]: d for d in dataset_details_list if d.get("DatasetCode")}
+    for item in metadata_items or []:
+        if not isinstance(item, dict):
+            continue
+        codes = item.get("DatasetCodes", [])
+        if not isinstance(codes, list):
+            continue
+        for code in codes:
+            if not isinstance(code, str) or not code or code in details_map:
+                continue
+            details_map[code] = {
+                "DatasetCode": code,
+                "DatasetName": "No metadata available",
+                "Description": "No metadata available for this dataset.",
+                "Unknown": True,
+            }
+    return details_map
 from sspi_flask_app.models.sspi import FastSSPI
 from sspi_flask_app.api.resources.scoring_tasks import (
     start_scoring_job,
@@ -41,6 +67,8 @@ from sspi_flask_app.api.resources.metadata_validator import (
     validate_custom_metadata,
     compute_config_hash,
 )
+from sspi_flask_app.api.resources.change_detection import changed_indicator_codes
+from sspi_flask_app.api.resources.baseline_version import cache_key, config_scores_are_current
 
 logger = logging.getLogger(__name__)
 
@@ -250,7 +278,7 @@ def get_default_structure():
                     dataset["Source"] = {}
                 dataset["Source"]["OrganizationName"] = full_org_name
 
-        all_datasets = {d["DatasetCode"]: d for d in all_datasets_list}
+        all_datasets = build_dataset_details_map(all_datasets_list, metadata_items)
         logger.info(f"Loaded default SSPI structure with {len(metadata_items)} items and {len(all_datasets_list)} datasets")
         return jsonify({
             "success": True,
@@ -442,14 +470,14 @@ def load_configuration(config_id):
                     dataset["Source"] = {}
                 dataset["Source"]["OrganizationName"] = full_org_name
 
-        all_datasets = {d["DatasetCode"]: d for d in all_datasets_list}
+        all_datasets = build_dataset_details_map(all_datasets_list, config["metadata"])
 
         # Check if configuration has been scored (has cached results)
         # Use the stored scored_hash which reflects the filtered metadata used during scoring
-        has_scores = False
         scored_hash = config.get("scored_hash")
-        if scored_hash:
-            has_scores = sspi_custom_panel_data.has_scores(scored_hash)
+        has_scores = config_scores_are_current(
+            config, sspi_custom_panel_data.has_scores
+        )
 
         logger.info(f"Loaded configuration {config_id} for user {user_id} (has_scores={has_scores}, scored_hash={scored_hash[:8] if scored_hash else 'None'}...)")
 
@@ -553,7 +581,7 @@ def get_empty_structure():
                     dataset["Source"] = {}
                 dataset["Source"]["OrganizationName"] = full_org_name
 
-        all_datasets = {d["DatasetCode"]: d for d in all_datasets_list}
+        all_datasets = build_dataset_details_map(all_datasets_list, empty_metadata)
 
         logger.info("Returned blank SSPI structure with 3 empty pillar slots")
 
@@ -605,7 +633,7 @@ def get_prebuilt_configuration(config_id):
                     dataset["Source"] = {}
                 dataset["Source"]["OrganizationName"] = full_org_name
 
-        all_datasets = {d["DatasetCode"]: d for d in all_datasets_list}
+        all_datasets = build_dataset_details_map(all_datasets_list, metadata_items)
 
         return jsonify({
             "success": True,
@@ -641,9 +669,13 @@ def validate_configuration():
 
         # Run the real validator: structural + hierarchy + per-parent weight
         # semantics + score-function checks. Returns structured errors/warnings.
+        # ScoreFunctions are validated only for indicators changed from the
+        # default SSPI: unchanged ones reuse official scores and are never
+        # parsed by the custom engine (None = validate all, fail safe).
         result = validate_custom_metadata(
             metadata,
-            validate_score_functions=True
+            validate_score_functions=True,
+            score_function_codes=changed_indicator_codes(metadata)
         )
         return jsonify({"success": True, **result.to_dict()})
     except Exception as e:
@@ -1148,7 +1180,7 @@ def score_custom_configuration():
             }), 400
 
         # Compute config hash for cache lookup
-        config_hash = compute_config_hash(custom_metadata)
+        config_hash = cache_key(compute_config_hash(custom_metadata))
 
         # Start background scoring job
         job_id = start_scoring_job(
@@ -1219,7 +1251,7 @@ def get_results_summary(config_id):
                 "message": "Configuration has no metadata"
             })
 
-        config_hash = compute_config_hash(metadata)
+        config_hash = cache_key(compute_config_hash(metadata))
 
         # Check if results exist in sspi_custom_item_data (by config_hash)
         has_results = sspi_custom_item_data.has_cached_results(config_hash)
@@ -1286,7 +1318,7 @@ def get_chart_data(config_id):
                 "message": "Configuration has no metadata"
             })
 
-        config_hash = compute_config_hash(metadata)
+        config_hash = cache_key(compute_config_hash(metadata))
 
         # Get query parameters
         item_code = request.args.get('item_code')
@@ -1353,6 +1385,31 @@ def get_chart_data(config_id):
 # ============================================================================
 # Panel Chart Endpoint for SSPIPanelChart
 # ============================================================================
+
+def to_unit_score_scale(line_docs: list[dict]) -> list[dict]:
+    """
+    Rescale custom line documents to the 0-1 scale of /api/v1/panel/score.
+
+    Custom panel data is stored on a 0-100 scale (yAxisMaxValue 100), but
+    ScorePanelChart and its subclasses fix the y axis at 0-1, so unscaled
+    custom lines rendered off the top of the chart. Documents already on the
+    unit scale pass through unchanged. Returns new dicts; input is not mutated.
+    """
+    scaled = []
+    for doc in line_docs:
+        if doc.get("yAxisMaxValue") != 100:
+            scaled.append(doc)
+            continue
+        out = dict(doc)
+        for field in ("data", "score"):
+            values = doc.get(field)
+            if isinstance(values, list):
+                out[field] = [v / 100 if isinstance(v, (int, float)) else v for v in values]
+        out["yAxisMinValue"] = 0
+        out["yAxisMaxValue"] = 1
+        scaled.append(out)
+    return scaled
+
 
 @customize_bp.route("/panel/score/<item_code>", methods=["GET"])
 @owner_or_admin_required
@@ -1486,7 +1543,7 @@ def get_custom_panel_score(item_code):
 
         return jsonify({
             "success": True,
-            "data": line_data,
+            "data": to_unit_score_scale(line_data),
             "tree": tree,
             "itemCode": item_code,
             "itemName": item_name,
