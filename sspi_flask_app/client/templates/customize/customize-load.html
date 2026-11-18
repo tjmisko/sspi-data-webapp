@@ -341,9 +341,11 @@ function initCardSelection() {
 
                 if (hasScores) {
                     viewBtn.classList.remove('hidden');
-                    // Standard SSPI links to main data view, others to visualize
+                    // Standard SSPI links to the main data view (the overall
+                    // SSPI panel), others to visualize. SSPI is not an
+                    // indicator, so /data/indicator/SSPI is an error page.
                     if (configId === 'default') {
-                        viewBtn.href = `/data/indicator/SSPI`;
+                        viewBtn.href = `/data`;
                     } else {
                         viewBtn.href = `/customize/visualize/${configId}`;
                     }

@@ -340,9 +340,9 @@ class CustomizableSSPIStructure {
         try {
             // If config is already scored and no unsaved changes, navigate to view scores
             if (this.hasScores && !this.unsavedChanges) {
-                // For default SSPI, navigate to main data overview
+                // For default SSPI, navigate to the main SSPI score view
                 if (this.baseConfig === 'sspi' || this.baseConfig === 'default') {
-                    window.location.href = '/data/overview';
+                    window.location.href = '/data';
                     return;
                 }
                 // For saved custom configs, navigate to custom visualization
