@@ -32,6 +32,7 @@ Indexes:
 - created_at - for cache management
 """
 
+from sspi_flask_app.models.database.cache_index import create_unique_cache_index
 from sspi_flask_app.models.database.mongo_wrapper import MongoWrapper
 from sspi_flask_app.models.errors import InvalidDocumentFormatError
 from datetime import datetime, timezone
@@ -415,14 +416,16 @@ class SSPICustomItemData(MongoWrapper):
     def create_indexes(self):
         """Create database indexes for optimal query performance."""
         # Primary compound unique index for cache lookups
-        self._mongo_database.create_index(
+        # Startup-safe: repairs the cache if old rows or an old index
+        # definition would make the unique build fail.
+        create_unique_cache_index(
+            self._mongo_database,
             [
                 ("config_hash", 1),
                 ("item_code", 1),
                 ("country_code", 1),
                 ("year", 1)
             ],
-            unique=True,
             name="unique_score_entry"
         )
 
