@@ -17,6 +17,6 @@ Indicator: Quality of Public Services & Governance
 IndicatorCode: PUBSRV
 LowerGoalpost: -2.5
 UpperGoalpost: 2.5
-ScoreFunction: Not available (computed from WGI_PUBSRV)
+ScoreFunction: Score = goalpost(WGI_PUBSRV, -2.5, 2.5)
 ---
 

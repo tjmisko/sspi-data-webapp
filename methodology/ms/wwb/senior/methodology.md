@@ -19,10 +19,10 @@ UpperGoalpost: null
 ScoreFunction: >
   Score = average(
       average(
-          goalpost(SENLEM - SENCRM, 0, 15),
-          goalpost(SENLEF - SENCRF, 0, 20)
+          goalpost(OECD_YRSRTM, 0, 15),
+          goalpost(OECD_YRSRTW, 0, 20)
       ),
-      goalpost(SENPVT, 0, 50)
+      goalpost(OECD_POVNRT, 0, 50)
   )
 ---
 

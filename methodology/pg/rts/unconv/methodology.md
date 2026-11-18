@@ -14,6 +14,6 @@ Indicator: Adoption of Key UN Conventions
 IndicatorCode: UNCONV
 LowerGoalpost: 0
 UpperGoalpost: 10
-ScoreFunction: Not available (computed from UNSDG_UNCONV)
+ScoreFunction: Score = goalpost(UNSDG_UNCONV, 0, 10)
 ---
 
