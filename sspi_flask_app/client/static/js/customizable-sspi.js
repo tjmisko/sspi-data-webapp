@@ -358,7 +358,7 @@ class CustomizableSSPIStructure {
             // Check if user is authenticated (required for scoring)
             if (!window.sspiUsername) {
                 notifications.error('Please log in to score configurations');
-                window.location.href = '/auth/login?next=' + encodeURIComponent(window.location.pathname + window.location.search);
+                window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname + window.location.search);
                 return;
             }
 
@@ -752,7 +752,7 @@ class CustomizableSSPIStructure {
             // Check if user is authenticated
             if (!window.sspiUsername) {
                 notifications.error('Please log in to save configurations');
-                window.location.href = '/auth/login?next=' + encodeURIComponent(window.location.pathname + window.location.search);
+                window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname + window.location.search);
                 return;
             }
 
@@ -780,7 +780,7 @@ class CustomizableSSPIStructure {
             // Check if user is authenticated
             if (!window.sspiUsername) {
                 notifications.error('Please log in to save configurations');
-                window.location.href = '/auth/login?next=' + encodeURIComponent(window.location.pathname + window.location.search);
+                window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname + window.location.search);
                 return;
             }
 
@@ -4932,6 +4932,13 @@ class CustomizableSSPIStructure {
     async runPreflightValidation() {
         // Clear markers from the previous run before re-validating.
         this.clearScoreFunctionMarkers();
+
+        // The endpoint requires an account; say so instead of surfacing the
+        // raw 401 body.
+        if (!window.sspiUsername) {
+            notifications.warning('Sign in to check score functions against the server.', 6000);
+            return;
+        }
 
         const metadata = this.exportMetadata();
 
