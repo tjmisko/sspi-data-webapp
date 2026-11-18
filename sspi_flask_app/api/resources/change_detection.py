@@ -94,6 +94,20 @@ def compute_indicator_scoring_signature(indicator: dict) -> str:
     return hashlib.sha256(json_str.encode("utf-8")).hexdigest()[:16]
 
 
+GOALPOST_FIELDS = ("LowerGoalpost", "UpperGoalpost")
+
+
+def _inherit_unset_goalposts(indicator: dict, default: dict) -> dict:
+    """Copy of `indicator` with None/missing goalposts taken from `default`."""
+    if all(indicator.get(field) is not None for field in GOALPOST_FIELDS):
+        return indicator
+    merged = dict(indicator)
+    for field in GOALPOST_FIELDS:
+        if merged.get(field) is None:
+            merged[field] = default.get(field)
+    return merged
+
+
 def get_default_indicator_signatures() -> dict[str, str]:
     """
     Scoring signature of each default indicator, keyed by indicator code.
@@ -247,8 +261,13 @@ def identify_modified_indicators(
             new_indicators.add(code)
             modified_indicators.add(code)  # New = needs computation
             continue
-        # Compare hash of scoring config
-        custom_hash = compute_indicator_scoring_signature(indicator)
+        # Compare hash of scoring config. The builder stores goalposts inside
+        # the ScoreFunction and saves LowerGoalpost/UpperGoalpost as None, so
+        # an unset goalpost inherits the default rather than counting as an
+        # edit (the scorer falls back to the ScoreFunction when they're None).
+        custom_hash = compute_indicator_scoring_signature(
+            _inherit_unset_goalposts(indicator, _load_default_indicators().get(code, {}))
+        )
         default_hash = default_hashes[code]
 
         if custom_hash == default_hash:

@@ -388,3 +388,51 @@ def test_should_leave_nan_when_baseline_missing_for_country_year(monkeypatch):
     grid = arrays["AAAAAA"]
     assert grid[1, 1] == 0.42
     assert np.isnan(grid).sum() == grid.size - 1
+
+
+# ---------------------------------------------------------------------------
+# Builder-saved shape: goalposts live in the ScoreFunction, fields are None
+# ---------------------------------------------------------------------------
+
+def _as_saved_by_builder(metadata):
+    """The builder saves LowerGoalpost/UpperGoalpost as None and the
+    ScoreFunction without the YAML trailing newline."""
+    saved = copy.deepcopy(metadata)
+    for item in saved:
+        if item.get("ItemType") == "Indicator":
+            item["LowerGoalpost"] = None
+            item["UpperGoalpost"] = None
+            item["ScoreFunction"] = item["ScoreFunction"].rstrip("\n")
+    return saved
+
+
+def test_should_treat_indicators_as_unchanged_when_builder_saved_goalposts_as_none(
+        default_metadata):
+    result = cd.identify_modified_indicators(_as_saved_by_builder(_metadata()))
+    assert result.modified_indicators == set()
+    assert result.unchanged_indicators == {"AAAAAA", "BBBBBB", "CCCCCC"}
+
+
+def test_should_mark_changed_when_builder_saved_config_edits_the_score_function(
+        default_metadata):
+    meta = _as_saved_by_builder(_metadata())
+    _by_code(meta, "BBBBBB")["ScoreFunction"] = "Score = goalpost(DS_B, 10, 100)"
+    result = cd.identify_modified_indicators(meta)
+    assert result.modified_indicators == {"BBBBBB"}
+
+
+def test_should_mark_changed_when_an_explicit_goalpost_differs_from_default(
+        default_metadata):
+    meta = _metadata()
+    _by_code(meta, "CCCCCC")["UpperGoalpost"] = 90
+    result = cd.identify_modified_indicators(meta)
+    assert result.modified_indicators == {"CCCCCC"}
+
+
+def test_should_inherit_only_the_unset_goalpost_when_one_is_explicit(
+        default_metadata):
+    meta = _metadata()
+    _by_code(meta, "AAAAAA")["LowerGoalpost"] = None
+    _by_code(meta, "AAAAAA")["UpperGoalpost"] = 80
+    result = cd.identify_modified_indicators(meta)
+    assert result.modified_indicators == {"AAAAAA"}
