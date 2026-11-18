@@ -171,7 +171,7 @@
 
 /* Integer part - right aligned */
 .stat-value-int {
-    font-family: 'Courier New', monospace;
+    font-family: var(--code-font-family);
     font-weight: bold;
     color: var(--text-color);
     text-align: right;
@@ -181,7 +181,7 @@
 
 /* Decimal part - left aligned */
 .stat-value-dec {
-    font-family: 'Courier New', monospace;
+    font-family: var(--code-font-family);
     font-weight: bold;
     color: var(--text-color);
     text-align: left;

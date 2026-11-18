@@ -10,6 +10,11 @@
   font-display: swap;
 }
 
+/* Typeface rule:
+   - title (REM): page titles, the site wordmark, and large display numerals.
+   - body/header (system sans): all UI, card and section headings, body text.
+   - article-body (Libre Baskerville): running text on long-form reading pages
+     only (methodology and analysis articles). Headings there stay sans. */
 :root {
   --flag-font-family: 'Twemoji Country Flags';
   --title-font-family: var(--flag-font-family), 'REM', system-ui, sans-serif;
