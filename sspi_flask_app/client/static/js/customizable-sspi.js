@@ -2426,7 +2426,7 @@ class CustomizableSSPIStructure {
         scoreFunctionEl.dataset.staleDatasetCodes = stale.join(',');
         scoreFunctionEl.classList.add('score-function-invalid');
         scoreFunctionEl.style.outline = '2px solid var(--error-color)';
-        scoreFunctionEl.title = 'Score function references ' + stale.join(', ') + ', which ' + (stale.length > 1 ? 'are' : 'is') + ' no longer in this indicator\'s dataset list. Edit the formula or restore the dataset.';
+        scoreFunctionEl.title = 'Score function references ' + stale.join(', ') + ', which ' + (stale.length > 1 ? 'are' : 'is') + ' not in this indicator\'s dataset list. Edit the formula or restore the dataset.';
     }
 
     /** Re-sync the stale marker for an indicator (after undo/redo). @private */
