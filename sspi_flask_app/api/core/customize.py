@@ -42,6 +42,7 @@ from sspi_flask_app.api.resources.metadata_validator import (
     compute_config_hash,
 )
 from sspi_flask_app.api.resources.change_detection import changed_indicator_codes
+from sspi_flask_app.api.resources.baseline_version import cache_key
 
 logger = logging.getLogger(__name__)
 
@@ -1153,7 +1154,7 @@ def score_custom_configuration():
             }), 400
 
         # Compute config hash for cache lookup
-        config_hash = compute_config_hash(custom_metadata)
+        config_hash = cache_key(compute_config_hash(custom_metadata))
 
         # Start background scoring job
         job_id = start_scoring_job(
@@ -1224,7 +1225,7 @@ def get_results_summary(config_id):
                 "message": "Configuration has no metadata"
             })
 
-        config_hash = compute_config_hash(metadata)
+        config_hash = cache_key(compute_config_hash(metadata))
 
         # Check if results exist in sspi_custom_item_data (by config_hash)
         has_results = sspi_custom_item_data.has_cached_results(config_hash)
@@ -1291,7 +1292,7 @@ def get_chart_data(config_id):
                 "message": "Configuration has no metadata"
             })
 
-        config_hash = compute_config_hash(metadata)
+        config_hash = cache_key(compute_config_hash(metadata))
 
         # Get query parameters
         item_code = request.args.get('item_code')

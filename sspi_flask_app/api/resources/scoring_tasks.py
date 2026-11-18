@@ -25,6 +25,7 @@ from enum import Enum
 from threading import Thread
 from typing import Callable
 
+from sspi_flask_app.api.resources.baseline_version import cache_key
 from sspi_flask_app.api.resources.change_detection import changed_indicator_codes
 from sspi_flask_app.api.resources.metadata_validator import (
     validate_custom_metadata,
@@ -666,7 +667,9 @@ def run_scoring_pipeline(
         # =====================================================================
         # Check cache before identifying modified indicators
         # =====================================================================
-        config_hash = compute_config_hash(metadata)
+        # Cache rows are keyed on (config hash, baseline version) so results
+        # built on superseded official scores are never served.
+        config_hash = cache_key(compute_config_hash(metadata))
         job.set_config_hash(config_hash)
 
         try:
