@@ -271,7 +271,7 @@
 
 <script>
 window.csrfToken = {{ csrf_token|tojson|safe }};
-window.sspiUsername = {{ current_user.username|tojson|safe if current_user.is_authenticated else '""' }};
+window.sspiUsername = {{ (current_user.username if current_user.is_authenticated else "")|tojson }};
 
 // Simple CSRF fetch helper (csrf.js may not be bundled)
 async function fetchWithCSRF(url, options = {}) {
