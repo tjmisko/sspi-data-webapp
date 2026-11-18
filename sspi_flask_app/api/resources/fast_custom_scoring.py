@@ -311,6 +311,11 @@ class FastCustomSSPI:
         # Build the aggregation matrix
         self.score_matrix = self._build_score_matrix()
 
+        # Per-level weight matrices used by the NaN-safe aggregate()
+        (self._indicator_to_category,
+         self._category_to_pillar,
+         self._pillar_to_sspi) = self._build_level_matrices()
+
     def _normalized_child_weight(
         self, child_code: str, sibling_codes: list[str]
     ) -> float:
@@ -514,9 +519,84 @@ class FastCustomSSPI:
         """
         return self._parent_map.get((child_code, parent_type))
 
+    def _build_level_matrices(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """
+        Direct (one level at a time) normalized weight matrices.
+
+        Returns (indicator->category, category->pillar, pillar->SSPI), shapes
+        (n_ind, n_cat), (n_cat, n_pil), (n_pil, 1). Entry [child, parent] is the
+        child's normalized weight within the parent's sibling set (same
+        ``_normalized_child_weight`` the flat score_matrix uses); zero where the
+        child does not belong to the parent.
+        """
+        n_ind = len(self.indicator_codes)
+        n_cat = len(self.category_codes)
+        n_pil = len(self.pillar_codes)
+        ind_to_cat = np.zeros((n_ind, n_cat), dtype=float)
+        cat_to_pil = np.zeros((n_cat, n_pil), dtype=float)
+        pil_to_sspi = np.zeros((n_pil, 1), dtype=float)
+
+        for ind_idx, ind_code in enumerate(self.indicator_codes):
+            category = self._find_parent(ind_code, "Category")
+            if not category:
+                continue
+            siblings = category.get("IndicatorCodes") or category.get("Children") or []
+            if not siblings:
+                continue
+            ind_to_cat[ind_idx, self.category_code_to_idx[category["ItemCode"]]] = (
+                self._normalized_child_weight(ind_code, siblings)
+            )
+        for cat_idx, cat_code in enumerate(self.category_codes):
+            pillar = self._find_parent(cat_code, "Pillar")
+            if not pillar:
+                continue
+            siblings = pillar.get("CategoryCodes") or pillar.get("Children") or []
+            if not siblings:
+                continue
+            cat_to_pil[cat_idx, self.pillar_code_to_idx[pillar["ItemCode"]]] = (
+                self._normalized_child_weight(cat_code, siblings)
+            )
+        for pil_idx, pil_code in enumerate(self.pillar_codes):
+            sspi = self._find_parent(pil_code, "SSPI")
+            if not sspi:
+                continue
+            siblings = sspi.get("PillarCodes") or sspi.get("Children") or []
+            if not siblings:
+                continue
+            pil_to_sspi[pil_idx, 0] = self._normalized_child_weight(pil_code, siblings)
+        return ind_to_cat, cat_to_pil, pil_to_sspi
+
+    @staticmethod
+    def _weighted_mean_over_available(
+        child_scores: np.ndarray, weights: np.ndarray
+    ) -> np.ndarray:
+        """
+        Weighted mean of children, re-normalized over those with data.
+
+        child_scores: (n_child, N) possibly containing NaN.
+        weights: (n_child, n_parent) normalized child weights.
+        Returns (n_parent, N). With every child present this is the plain
+        weighted mean (the official aggregation when weights are equal); a
+        missing child's weight is redistributed over the present siblings; a
+        parent with no present child (or zero present weight) is NaN.
+        """
+        present = ~np.isnan(child_scores)
+        numerator = weights.T @ np.where(present, child_scores, 0.0)
+        denominator = weights.T @ present.astype(float)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            result = numerator / denominator
+        return np.where(denominator > 0, result, np.nan)
+
     def aggregate(self, indicator_scores: np.ndarray) -> np.ndarray:
         """
-        Aggregate indicator scores to all hierarchy levels via matrix multiplication.
+        Aggregate indicator scores to all hierarchy levels, one level at a time.
+
+        Matches the official pipeline (SSPI model: each category/pillar/SSPI
+        score is the mean of its children) when every child has data, using
+        the configured per-parent weights (equal when none are set). When a
+        child is missing for a country-year its weight is re-normalized over
+        the siblings that have data, so one NaN no longer poisons the parent.
+        A parent with no child data stays NaN.
 
         Args:
             indicator_scores: Array of shape (n_indicators, n_countries, n_years)
@@ -527,27 +607,19 @@ class FastCustomSSPI:
         """
         n_indicators, n_countries, n_years = indicator_scores.shape
         n_items = len(self.item_codes)
-
-        logger.debug(
-            f"Aggregating scores: {n_indicators} indicators -> {n_items} items "
-            f"for {n_countries} countries, {n_years} years"
-        )
-
-        # Reshape to (n_indicators, n_countries * n_years) for matrix multiplication
         flat_scores = indicator_scores.reshape(n_indicators, n_countries * n_years)
 
-        # Matrix multiply: score_matrix.T @ flat_scores
-        # score_matrix shape: (n_indicators, n_items)
-        # score_matrix.T shape: (n_items, n_indicators)
-        # flat_scores shape: (n_indicators, n_countries * n_years)
-        # result shape: (n_items, n_countries * n_years)
-        aggregated_flat = self.score_matrix.T @ flat_scores
-
-        # Reshape back to (n_items, n_countries, n_years)
-        aggregated_scores = aggregated_flat.reshape(n_items, n_countries, n_years)
-
-        logger.debug(f"Aggregation complete: {aggregated_scores.shape}")
-        return aggregated_scores
+        categories = self._weighted_mean_over_available(
+            flat_scores, self._indicator_to_category
+        )
+        pillars = self._weighted_mean_over_available(
+            categories, self._category_to_pillar
+        )
+        sspi = self._weighted_mean_over_available(
+            pillars, self._pillar_to_sspi
+        )
+        aggregated_flat = np.concatenate([categories, pillars, sspi], axis=0)
+        return aggregated_flat.reshape(n_items, n_countries, n_years)
 
 
 # =============================================================================
