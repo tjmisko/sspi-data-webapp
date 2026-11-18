@@ -585,7 +585,17 @@ def run_scoring_pipeline(
         # This must happen first so indicators with empty datasets are filtered
         # out before validation - otherwise their invalid ScoreFunctions will
         # cause validation to fail unnecessarily.
-        empty_dataset_result = identify_empty_datasets(metadata)
+        #
+        # Change detection runs BEFORE the drop: only changed/new indicators
+        # read raw datasets, so only they can be dropped for empty data.
+        # Unchanged indicators reuse official scores and are never dropped
+        # (an indicator with official scores but empty clean datasets, e.g.
+        # TRNETW, must keep its baseline rows). None (detection failed) makes
+        # every indicator droppable and computed.
+        changed_codes = changed_indicator_codes(metadata)
+        empty_dataset_result = identify_empty_datasets(
+            metadata, droppable_codes=changed_codes
+        )
 
         dropped_count = len(empty_dataset_result.dropped_indicators)
         scorable_count = len(empty_dataset_result.scorable_indicators)
@@ -630,10 +640,8 @@ def run_scoring_pipeline(
 
         # Only indicators changed from the default SSPI are score-function
         # validated (and later recomputed); unchanged ones reuse the official
-        # baseline scores. Change detection runs on the post-drop metadata.
+        # baseline scores. changed_codes was computed above, before the drop.
         # None (detection failed) means validate and compute everything.
-        changed_codes = changed_indicator_codes(metadata)
-
         validation_result = validate_custom_metadata(
             metadata,
             valid_dataset_codes=valid_datasets,

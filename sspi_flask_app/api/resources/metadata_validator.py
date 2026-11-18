@@ -281,7 +281,14 @@ def validate_custom_metadata(
     # Check for empty datasets if requested
     if check_data_availability:
         from sspi_flask_app.api.resources.custom_scoring import identify_empty_datasets
-        empty_result = identify_empty_datasets(metadata)
+        from sspi_flask_app.api.resources.change_detection import (
+            changed_indicator_codes,
+        )
+        # Unchanged indicators reuse official scores, so only changed/new
+        # indicators can be dropped for empty datasets.
+        empty_result = identify_empty_datasets(
+            metadata, droppable_codes=changed_indicator_codes(metadata)
+        )
 
         for dropped in empty_result.dropped_indicators:
             result.add_warning(
